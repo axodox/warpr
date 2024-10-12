@@ -1,0 +1,6 @@
+@wormhole_HostAddress = http://localhost:5139
+
+GET {{wormhole_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

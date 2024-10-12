@@ -1,0 +1,6 @@
+Package: libdatachannel
+Feature: ws
+Architecture: x64-windows
+Multi-Arch: same
+Description: Web Socket support
+Status: install ok half-installed

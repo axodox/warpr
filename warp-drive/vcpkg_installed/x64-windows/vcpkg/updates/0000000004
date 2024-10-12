@@ -1,0 +1,9 @@
+Package: usrsctp
+Version: 0.9.5.0
+Port-Version: 4
+Depends: vcpkg-cmake, vcpkg-cmake-config
+Architecture: x64-windows
+Multi-Arch: same
+Abi: f125c710b9f55da4172df7ed8d65087ca1cbefd92b6e2acde89ce0ca41b4283d
+Description: A userland SCTP stack supporting FreeBSD, Linux, Mac OS X and Windows.
+Status: install ok half-installed

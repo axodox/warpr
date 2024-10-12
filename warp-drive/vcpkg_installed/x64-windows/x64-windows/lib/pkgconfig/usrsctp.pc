@@ -1,0 +1,13 @@
+prefix=${pcfiledir}/../..
+exec_prefix=${prefix}
+libdir=${prefix}/lib
+includedir=${prefix}/include/usrsctp
+
+Name: usrsctp
+Description: SCTP implementation
+URL: https://github.com/sctplab/usrsctp
+Version: 0.9.5.0
+
+Libs: "-L${libdir}" -lusrsctp
+Requires: 
+Cflags: "-I${includedir}" 

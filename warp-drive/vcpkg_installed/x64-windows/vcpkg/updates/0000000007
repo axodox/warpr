@@ -1,0 +1,8 @@
+Package: plog
+Version: 1.1.10
+Depends: vcpkg-cmake, vcpkg-cmake-config
+Architecture: x64-windows
+Multi-Arch: same
+Abi: a96526fba783a7239f5778f005e06384b9641c762dd48969ae3a6f4ccf5b111f
+Description: Portable, simple and extensible C++ logging library.
+Status: install ok installed
