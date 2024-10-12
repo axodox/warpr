@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.HttpOverrides;
 using System.Reflection;
 using Warpr.Gateway.Sources;
 
@@ -9,13 +10,24 @@ builder.Services
   .AddApplicationPart(Assembly.GetExecutingAssembly());
 
 builder.Services
+  .Configure<ForwardedHeadersOptions>(options =>
+  {
+    options.ForwardedHeaders =
+        ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+  });
+
+builder.Services
   .AddSingleton<ICaptureSourceRepository, CaptureSourceRepository>();
 
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
-app.UseHttpsRedirection();
+app.UseDefaultFiles();
+app.UseStaticFiles();
+//app.UseHttpsRedirection();
 app.UseAuthorization();
-app.MapControllers();
+app.UseForwardedHeaders();
 app.UseWebSockets();
+app.MapControllers();
+app.MapFallbackToFile("/index.html");
 app.Run();
