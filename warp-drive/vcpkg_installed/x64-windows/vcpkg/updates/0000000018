@@ -1,0 +1,10 @@
+Package: libdatachannel
+Version: 0.21.2
+Port-Version: 1
+Depends: libjuice, nlohmann-json, openssl, plog, usrsctp, vcpkg-cmake, vcpkg-cmake-config
+Architecture: x64-windows
+Multi-Arch: same
+Abi: c8e34ceffd5eb061b4ae7ee8dddfdb5a8014061760816baa3f88029627b887ac
+Description: libdatachannel is a standalone implementation of WebRTC Data Channels, WebRTC Media Transport, and WebSockets in C++17 with C bindings for POSIX platforms (including GNU/Linux, Android, and Apple macOS) and Microsoft Windows.
+Default-Features: ws
+Status: install ok installed

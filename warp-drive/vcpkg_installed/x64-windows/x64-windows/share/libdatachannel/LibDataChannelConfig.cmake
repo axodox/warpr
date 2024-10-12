@@ -1,0 +1,15 @@
+if(NOT "ON")
+    include(CMakeFindDependencyMacro)
+    set(THREADS_PREFER_PTHREAD_FLAG ON)
+    find_dependency(Threads)
+    find_dependency(plog CONFIG)
+    find_dependency(unofficial-usrsctp CONFIG)
+    if(NOT "ON")
+        find_dependency(libSRTP CONFIG)
+    endif()
+    find_dependency(OpenSSL)
+    find_dependency(LibJuice)
+endif()
+
+include("${CMAKE_CURRENT_LIST_DIR}/LibDataChannelTargets.cmake")
+
