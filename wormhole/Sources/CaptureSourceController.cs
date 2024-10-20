@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using System.Text;
 using Warpr.Gateway.Extensions;
 
 namespace Warpr.Gateway.Sources
@@ -29,6 +30,7 @@ namespace Warpr.Gateway.Sources
       if (!HttpContext.WebSockets.IsWebSocketRequest) return BadRequest("This API only supports web socket requests.");
 
       var result = new WebSocketResult();
+      //result.Connected += (s, e) => _ = result.SendMessageAsync(Encoding.UTF8.GetBytes("Hello WebSocket!"), System.Net.WebSockets.WebSocketMessageType.Text);
       _repository.RegisterSource(result);
       return result;
     }
