@@ -15,6 +15,8 @@ namespace Warpr.Gateway.Extensions
     event EventHandler<WebSocketMessageReceivedEventArgs>? MessageReceived;
     HttpRequest? Request { get; }
 
+    string EndPoint => Request!.HttpContext.Connection.RemoteEndPoint();
+
     Task SendMessageAsync(ReadOnlyMemory<byte> message, WebSocketMessageType messageType);
     Task CloseAsync();
   }

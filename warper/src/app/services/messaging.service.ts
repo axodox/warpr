@@ -7,7 +7,7 @@ import { WarprMessage } from '../data/messages';
 })
 export class MessagingService extends WebSocketClient<WarprMessage> {
 
-  private static readonly _connectionUri = 'api/sources/connect';
+  private static readonly _connectionUri = 'api/sinks/connect';
 
   constructor() {
     const uri = MessagingService.GetServerUri();

@@ -17,7 +17,8 @@ builder.Services
   });
 
 builder.Services
-  .AddSingleton<ICaptureSourceRepository, CaptureSourceRepository>();
+  .AddSingleton<IStreamingSourceRepository, StreamingSourceRepository>()
+  .AddSingleton<IStreamingSinkRepository, StreamingSinkRepository>();
 
 var app = builder.Build();
 
