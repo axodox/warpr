@@ -138,6 +138,8 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Infrastructure\RtcLogger.cpp" />
+    <ClCompile Include="Messaging\Messages.cpp" />
     <ClCompile Include="warp-drive.cpp" />
     <ClCompile Include="WindowLocator.cpp" />
   </ItemGroup>
@@ -147,6 +149,9 @@
     <None Include="vcpkg.json" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Infrastructure\RtcLogger.h" />
+    <ClInclude Include="Messaging\Messages.h" />
+    <ClInclude Include="Messaging\WebSocketClient.h" />
     <ClInclude Include="WindowLocator.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
