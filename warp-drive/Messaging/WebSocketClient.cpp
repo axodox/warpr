@@ -1,6 +1,5 @@
 #include "warpr_includes.h"
 #include "WebSocketClient.h"
-#include "Core/WarpConfiguration.h"
 
 using namespace Axodox::Infrastructure;
 using namespace Axodox::Json;
@@ -14,24 +13,36 @@ namespace Warpr::Messaging
     Connected(_events),
     MessageReceived(_events),
     Disconnected(_events),
-    _uri(container->resolve<WarpConfiguration>()->GatewayUri)
+    _settings(container->resolve<WarpConfiguration>())
   {
+    //Connected
     _socket.onOpen([=] {
-      _logger.log(log_severity::information, "Connected to {}.", _uri);
+      _logger.log(log_severity::information, "Connected to {}.", _settings->GatewayUri);
+
+      ConnectionRequest connectionRequest;
+      *connectionRequest.SessionId = _settings->SessionId;
+      SendMessage(connectionRequest);
+
       _events.raise(Connected, this);
       });
+
+    //Received
     _socket.onMessage([=](const auto& message) {
       ReceiveMessage(message);
       });
+
+    //Disconnected
     _socket.onClosed([=] {
-      _logger.log(log_severity::information, "Disconnected from {}.", _uri);
+      _logger.log(log_severity::information, "Disconnected from {}.", _settings->GatewayUri);
       _events.raise(Disconnected, this);
       if (_isDisposing) return;
 
       this_thread::sleep_for(1s);
-      _socket.open(_uri);
+      _socket.open(_settings->GatewayUri);
       });
-    _socket.open(_uri);
+
+    //Start
+    _socket.open(_settings->GatewayUri);
   }
 
   WebSocketClient::~WebSocketClient()
@@ -60,8 +71,8 @@ namespace Warpr::Messaging
       _logger.log(log_severity::warning, "Expected text message, but received binary.");
       return;
     }
-    auto& jsonMessage = get<string>(rawMessage);
 
+    auto& jsonMessage = get<string>(rawMessage);
     auto warprMessage = try_parse_json<unique_ptr<WarprMessage>>(jsonMessage);
     if (!warprMessage)
     {

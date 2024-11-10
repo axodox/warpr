@@ -8,11 +8,11 @@ export interface IEventSource {
 export class EventSubscription {
 
   constructor(
-    private owner: IEventSource,
-    private token: symbol) { }
+    private _owner: IEventSource,
+    private _token: symbol) { }
 
   Unsubscribe() {
-    this.owner.Unsubscribe(this.token);
+    this._owner.Unsubscribe(this._token);
   }
 }
 
@@ -25,24 +25,28 @@ export class EventOwner {
   }
 }
 
+export class EventArgs {
+  public static readonly Empty = new EventArgs();
+}
+
 export class EventPublisher<TSender, TEventArgs> implements IEventSource {
 
-  private readonly token: symbol;
-  private readonly handlers = new Map<symbol, EventHandler<TSender, TEventArgs>>;
+  private readonly _token: symbol;
+  private readonly _handlers = new Map<symbol, EventHandler<TSender, TEventArgs>>;
 
   constructor(owner: EventOwner) {
-    this.token = owner.Token;
+    this._token = owner.Token;
   }
 
   Subscribe(handler: EventHandler<TSender, TEventArgs>) {
     const token = Symbol();
-    this.handlers.set(token, handler);
+    this._handlers.set(token, handler);
     return new EventSubscription(this, token);
   }
 
   Raise(owner: EventOwner, sender: TSender, eventArgs: TEventArgs): void {
-    if (owner.Token === this.token) {
-      for (let [symbol, handler] of this.handlers) {
+    if (owner.Token === this._token) {
+      for (let [symbol, handler] of this._handlers) {
         handler(sender, eventArgs);
       }
     }
@@ -52,6 +56,6 @@ export class EventPublisher<TSender, TEventArgs> implements IEventSource {
   }
 
   Unsubscribe(token: symbol): void {
-    this.handlers.delete(token);
+    this._handlers.delete(token);
   }
 }

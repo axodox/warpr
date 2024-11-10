@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { WebSocketClient } from '../networking/web-socket-client';
-import { WarprMessage } from '../data/messages';
+import { WarprMessage, ConnectionRequest } from '../data/messages';
 
 @Injectable({
   providedIn: 'root'
@@ -8,6 +8,7 @@ import { WarprMessage } from '../data/messages';
 export class MessagingService extends WebSocketClient<WarprMessage> {
 
   private static readonly _connectionUri = 'api/sinks/connect';
+  private readonly _sessionId = "a5d26e70-2b61-451f-9ecb-7d1b9a76ed1b";
 
   constructor() {
     const uri = MessagingService.GetServerUri();
@@ -20,5 +21,11 @@ export class MessagingService extends WebSocketClient<WarprMessage> {
     return `${protocol}://${location.host}/${this._connectionUri}`;
   }
 
-  
+  protected override OnConnected(): void {
+    super.OnConnected();
+
+    let request = new ConnectionRequest();
+    request.SessionId = this._sessionId;
+    this.SendMessage(request);
+  }
 }

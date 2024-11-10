@@ -3,16 +3,26 @@
 
 namespace Warpr::Messaging
 {
-  enum WarprMessageType
+  enum class WarprMessageType
   {
     Unknown = 0,
-    PeerConnectionDescription,
-    PeerConnectionCandidate
+    ConnectionRequest,
+    PeerConnectionDescriptionMessage,
+    PeerConnectionCandidateMessage
   };
 
   struct WarprMessage : public Axodox::Json::json_object_base
   {
     virtual WarprMessageType Type() const = 0;
+  };
+
+  struct ConnectionRequest : public WarprMessage
+  {
+    Axodox::Json::json_property<Axodox::Infrastructure::uuid> SessionId;
+
+    ConnectionRequest();
+
+    virtual WarprMessageType Type() const override;
   };
 
   struct PeerConnectionDescriptionMessage : public WarprMessage

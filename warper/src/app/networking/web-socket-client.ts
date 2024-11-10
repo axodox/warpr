@@ -1,11 +1,13 @@
-import { EventOwner, EventPublisher } from "../insfrastructure/events";
+import { EventOwner, EventPublisher, EventArgs } from "../insfrastructure/events";
 import { IMessagingClient } from "./messaging-client";
 
 export class WebSocketClient<TMessage> implements IMessagingClient<TMessage> {
-  private readonly socket: WebSocket;
+  private readonly _socket: WebSocket;
+  private readonly _events = new EventOwner();
 
-  private readonly events = new EventOwner();
-  public readonly MessageReceived = new EventPublisher<IMessagingClient<TMessage>, TMessage>(this.events);
+  public readonly Connected = new EventPublisher<IMessagingClient<TMessage>, EventArgs>(this._events);
+  public readonly MessageReceived = new EventPublisher<IMessagingClient<TMessage>, TMessage>(this._events);
+  public readonly Disconnected = new EventPublisher<IMessagingClient<TMessage>, EventArgs>(this._events);
 
   constructor(uri: string) {
     console.log(`Connecting to ${uri}...`);
@@ -15,32 +17,34 @@ export class WebSocketClient<TMessage> implements IMessagingClient<TMessage> {
     socket.onmessage = (e: MessageEvent<string>) => this.OnMessageReceived(e);
     socket.onclose = () => this.OnDisconnected();
     socket.onerror = (e: Event) => this.OnError(e);
-    this.socket = socket;
+    this._socket = socket;
   }
 
   SendMessage(message: TMessage): void {
     let content = JSON.stringify(message);
     console.log(`Sending message: ${content}`);
 
-    this.socket.send(content);
+    this._socket.send(content);
   }
 
-  private OnConnected(): void {
-    console.log(`Connected to: ${this.socket.url}.`);
+  protected OnConnected(): void {
+    console.log(`Connected to: ${this._socket.url}.`);
+    this._events.Raise(this.Connected, this, EventArgs.Empty);
   }
 
-  private OnMessageReceived(eventArgs: MessageEvent<string>): void {
+  protected OnMessageReceived(eventArgs: MessageEvent<string>): void {
     console.log('Message received: ' + eventArgs.data);
 
     let message = JSON.parse(eventArgs.data) as TMessage;
-    this.events.Raise(this.MessageReceived, this, message);
+    this._events.Raise(this.MessageReceived, this, message);
   }
 
-  private OnDisconnected(): void {
-    console.log(`Disconnected from: ${this.socket.url}.`);
+  protected OnDisconnected(): void {
+    console.log(`Disconnected from: ${this._socket.url}.`);
+    this._events.Raise(this.Disconnected, this, EventArgs.Empty);
   }
 
-  private OnError(error: Event): void {
+  protected OnError(error: Event): void {
     console.log('Connection failed: ' + error);
   }
 }
