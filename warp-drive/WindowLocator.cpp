@@ -1,8 +1,5 @@
-#include <algorithm>
-#include <windows.h>
-#include <appmodel.h>
-#include <winrt\base.h>
-#include <shlwapi.h>
+#include "warpr_includes.h"
+
 #include "WindowLocator.h"
 
 #pragma comment (lib, "shlwapi.lib")

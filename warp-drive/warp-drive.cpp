@@ -1,8 +1,8 @@
 // warp-drive.cpp : This file contains the 'main' function. Program execution begins and ends there.
 //
 
+#include "warpr_includes.h"
 #include <iostream>
-#include <Windows.h>
 #include <winrt/base.h>
 //#include <print>
 #include "rtc/rtc.hpp"
@@ -10,6 +10,8 @@
 
 #include "Messaging/Messages.h"
 #include "Infrastructure/RtcLogger.h"
+
+#include "Core/WarpDrive.h"
 
 using namespace std;
 using namespace rtc;
@@ -19,11 +21,18 @@ using namespace warper;
 
 using namespace Axodox::Infrastructure;
 using namespace Axodox::Json;
+using namespace Warpr;
 using namespace Warpr::Infrastructure;
 using namespace Warpr::Messaging;
 
 int main()
 {
+  WarpDrive drive;
+
+  std::this_thread::sleep_for(10000s);
+  return 0;
+
+
   logger log{ "main" };
   log.log(log_severity::information, "Hello Warpr!");
   
@@ -52,17 +61,18 @@ int main()
   auto text = stringify_json(message);
   auto message2 = try_parse_json<std::unique_ptr<WarprMessage>>(text);
 
+
   Configuration config;
   config.iceServers.emplace_back("stun:stun.l.google.com:19302");
   //config.disableAutoNegotiation = true;
 
   PeerConnection connection{ config };
   connection.onLocalDescription([](Description description) {
-    cout << "Description: " << string(description) << endl;
+    //cout << "Description: " << string(description) << endl;
     });
 
   connection.onLocalCandidate([](Candidate candidate) {
-    cout << "Candidate: " << string(candidate) << endl;
+    //cout << "Candidate: " << string(candidate) << endl;
     });
 
   auto channel = connection.createDataChannel("test");
