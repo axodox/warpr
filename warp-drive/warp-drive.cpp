@@ -47,7 +47,7 @@ int main()
     });
   ws.open("wss://127.0.0.1:5001/api/sources/connect");*/
 
-  auto descriptionMessage = make_unique<ConnectionDescriptionMessage>();
+  auto descriptionMessage = make_unique<PeerConnectionDescriptionMessage>();
   *descriptionMessage->Description = "asdad";
 
   auto x = intptr_t(&descriptionMessage->Description);
@@ -64,6 +64,7 @@ int main()
 
   Configuration config;
   config.iceServers.emplace_back("stun:stun.l.google.com:19302");
+  
   //config.disableAutoNegotiation = true;
 
   PeerConnection connection{ config };

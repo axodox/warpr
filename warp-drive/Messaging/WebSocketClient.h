@@ -6,14 +6,18 @@ namespace Warpr::Messaging
 {
   class WebSocketClient
   {
-    inline static Axodox::Infrastructure::logger _logger{ "WebSocketClient" };
+    inline static const Axodox::Infrastructure::logger _logger{ "WebSocketClient" };
     Axodox::Infrastructure::event_owner _events;
 
   public:
     WebSocketClient(Axodox::Infrastructure::dependency_container* container);
     ~WebSocketClient();
 
+    bool IsConnected() const;
+
+    Axodox::Infrastructure::event_publisher<WebSocketClient*> Connected;
     Axodox::Infrastructure::event_publisher<WebSocketClient*, const WarprMessage*> MessageReceived;
+    Axodox::Infrastructure::event_publisher<WebSocketClient*> Disconnected;
 
     void SendMessage(const WarprMessage& message);
 

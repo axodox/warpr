@@ -6,7 +6,8 @@ namespace Warpr::Messaging
   enum WarprMessageType
   {
     Unknown = 0,
-    ConnectionDescription
+    PeerConnectionDescription,
+    PeerConnectionCandidate
   };
 
   struct WarprMessage : public Axodox::Json::json_object_base
@@ -14,11 +15,20 @@ namespace Warpr::Messaging
     virtual WarprMessageType Type() const = 0;
   };
 
-  struct ConnectionDescriptionMessage : public WarprMessage
+  struct PeerConnectionDescriptionMessage : public WarprMessage
   {
     Axodox::Json::json_property<std::string> Description;
 
-    ConnectionDescriptionMessage();
+    PeerConnectionDescriptionMessage();
+
+    virtual WarprMessageType Type() const override;
+  };
+
+  struct PeerConnectionCandidateMessage : public WarprMessage
+  {
+    Axodox::Json::json_property<std::string> Candidate;
+
+    PeerConnectionCandidateMessage();
 
     virtual WarprMessageType Type() const override;
   };
@@ -29,6 +39,9 @@ namespace Axodox::Json
   template <>
   struct json_serializer<std::unique_ptr<Warpr::Messaging::WarprMessage>>
   {
+    static const std::string type_names[];
+    static const std::function<std::unique_ptr<Warpr::Messaging::WarprMessage>()> type_factories[];
+    
     static Infrastructure::value_ptr<json_value> to_json(const std::unique_ptr<Warpr::Messaging::WarprMessage>& value);
     static bool from_json(const json_value* json, std::unique_ptr<Warpr::Messaging::WarprMessage>& value);
   };

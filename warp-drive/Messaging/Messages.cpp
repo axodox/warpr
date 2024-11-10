@@ -8,18 +8,39 @@ using namespace Warpr::Messaging;
 
 namespace Warpr::Messaging
 {
-  ConnectionDescriptionMessage::ConnectionDescriptionMessage() :
+  PeerConnectionDescriptionMessage::PeerConnectionDescriptionMessage() :
     Description(this, "Description")
   { }
 
-  WarprMessageType ConnectionDescriptionMessage::Type() const
+  WarprMessageType PeerConnectionDescriptionMessage::Type() const
   {
-    return WarprMessageType::ConnectionDescription;
+    return WarprMessageType::PeerConnectionDescription;
+  }
+
+  PeerConnectionCandidateMessage::PeerConnectionCandidateMessage() :
+    Candidate(this, "Candidate")
+  { }
+
+  WarprMessageType PeerConnectionCandidateMessage::Type() const
+  {
+    return WarprMessageType::PeerConnectionDescription;
   }
 }
 
 namespace Axodox::Json
 {
+  const std::string json_serializer<unique_ptr<WarprMessage>>::type_names[] = {
+    "Unknown",
+    "PeerConnectionDescription",
+    "PeerConnectionCandidate"
+  };
+
+  const std::function<unique_ptr<Warpr::Messaging::WarprMessage>()> json_serializer<unique_ptr<WarprMessage>>::type_factories[] = {
+    [] { return nullptr; },
+    [] { return make_unique<PeerConnectionDescriptionMessage>(); },
+    [] { return make_unique<PeerConnectionCandidateMessage>(); }
+  };
+
   Infrastructure::value_ptr<json_value> json_serializer<unique_ptr<WarprMessage>>::to_json(const std::unique_ptr<Warpr::Messaging::WarprMessage>& value)
   {
     //Serialize data
@@ -28,18 +49,7 @@ namespace Axodox::Json
     //Add type info
     {
       auto object = static_cast<json_object*>(result.get());
-
-      const char* type;
-      switch (value->Type())
-      {
-      case WarprMessageType::ConnectionDescription:
-        type = "ConnectionDescription";
-        break;
-      default:
-        throw logic_error("Message type not implemented!");
-      }
-
-      object->at("Type") = make_value<json_string>(type);
+      object->at("Type") = make_value<json_string>(type_names[size_t(value->Type())]);
     }
 
     return result;
@@ -50,19 +60,24 @@ namespace Axodox::Json
     if (json && json->type() == json_type::object)
     {
       auto object = static_cast<const json_object*>(json);
-      
+
       //Decode type info
       json_value* typeValue;
       if (!object->try_get_value("Type", typeValue) || typeValue->type() != json_type::string) return false;
 
       auto& type = static_cast<const json_string*>(typeValue)->value;
+      for (auto i = 0; auto & name : type_names)
+      {
+        if (name == type)
+        {
+          value = type_factories[i]();
+        }
+
+        i++;
+      }
 
       //Instantiate result
-      if (type == "ConnectionDescription")
-      {
-        value = make_unique<ConnectionDescriptionMessage>();
-      }
-      else
+      if (!value)
       {
         return false;
       }

@@ -1,6 +1,7 @@
 #include "warpr_includes.h"
 #include "WarpDrive.h"
 #include "Messaging/WebSocketClient.h"
+#include "Messaging/WebRtcClient.h"
 #include "Infrastructure/RtcLogger.h"
 
 using namespace Axodox::Infrastructure;
@@ -19,6 +20,7 @@ namespace Warpr
 
     _container.add<WarpConfiguration>(make_shared<WarpConfiguration>(configuration));
     _container.resolve<WebSocketClient>();
+    _container.resolve<WebRtcClient>();
 
     _logger.log(log_severity::information, L"Warp drive ready.");
   }

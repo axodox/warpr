@@ -11,17 +11,21 @@ using namespace std::string_literals;
 namespace Warpr::Messaging
 {
   WebSocketClient::WebSocketClient(Axodox::Infrastructure::dependency_container* container) :
+    Connected(_events),
     MessageReceived(_events),
+    Disconnected(_events),
     _uri(container->resolve<WarpConfiguration>()->GatewayUri)
   {
     _socket.onOpen([=] {
       _logger.log(log_severity::information, "Connected to {}.", _uri);
+      _events.raise(Connected, this);
       });
     _socket.onMessage([=](const auto& message) {
       ReceiveMessage(message);
       });
     _socket.onClosed([=] {
       _logger.log(log_severity::information, "Disconnected from {}.", _uri);
+      _events.raise(Disconnected, this);
       if (_isDisposing) return;
 
       this_thread::sleep_for(1s);
@@ -35,9 +39,17 @@ namespace Warpr::Messaging
     _isDisposing = true;
   }
 
+  bool WebSocketClient::IsConnected() const
+  {
+    return _socket.isOpen();
+  }
+
   void WebSocketClient::SendMessage(const WarprMessage& warprMessage)
   {
-    auto jsonMessage = stringify_json(as_unique(warprMessage));
+    unique_ptr<WarprMessage> ptr{ const_cast<WarprMessage*>(&warprMessage) };
+    std::string jsonMessage = stringify_json(ptr);
+    ptr.release();
+
     _socket.send(jsonMessage);
   }
 
