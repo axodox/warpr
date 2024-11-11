@@ -5,17 +5,58 @@ using namespace Axodox::Infrastructure;
 using namespace rtc;
 using namespace std;
 
+
 namespace Warpr::Messaging
 {
+  const std::string_view WebRtcClient::_stateNames[] = {
+    "New",
+    "Connecting",
+    "Connected",
+    "Disconnected",
+    "Failed",
+    "Closed"
+  };
+
   WebRtcClient::WebRtcClient(Axodox::Infrastructure::dependency_container* container) :
     _settings(container->resolve<WarpConfiguration>()),
     _signaler(container->resolve<WebSocketClient>()),
-    _signalerConnectedSubscription(_signaler->Connected({ this, &WebRtcClient::OnSignalerConnected }))
+    _signalerMessageReceivedSubscription(_signaler->MessageReceived({ this, &WebRtcClient::OnSignalerMessageReceived }))
+  { }
+
+  void WebRtcClient::OnSignalerMessageReceived(WebSocketClient* sender, const WarprMessage* message)
   {
-    if (_signaler->IsConnected()) OnSignalerConnected(_signaler.get());
+    lock_guard lock(_mutex);
+
+    switch (message->Type())
+    {
+    case WarprMessageType::PairingCompleteMessage:
+      Connect();
+      break;
+
+    case WarprMessageType::PeerConnectionDescriptionMessage:
+      if (_peerConnection)
+      {
+        auto descriptionMessage = static_cast<const PeerConnectionDescriptionMessage*>(message);
+        _peerConnection->setRemoteDescription(*descriptionMessage->Description);
+        _logger.log(log_severity::debug, "Remote description:\n{}", *descriptionMessage->Description);
+      }
+      break;
+
+    case WarprMessageType::PeerConnectionCandidateMessage:
+      if (_peerConnection)
+      {
+        auto descriptionMessage = static_cast<const PeerConnectionCandidateMessage*>(message);
+        _peerConnection->addRemoteCandidate(*descriptionMessage->Candidate);
+        _logger.log(log_severity::debug, "Remote candidate: {}", *descriptionMessage->Candidate);
+      }
+      break;
+
+    default:
+      break;
+    }
   }
 
-  void WebRtcClient::OnSignalerConnected(WebSocketClient* sender)
+  void WebRtcClient::Connect()
   {
     _logger.log(log_severity::information, "Initializing WebRTC connection...");
 
@@ -35,7 +76,7 @@ namespace Warpr::Messaging
       *message.Description = string(description);
       _signaler->SendMessage(message);
 
-      _logger.log(log_severity::debug, "Local description: {}", *message.Description);
+      _logger.log(log_severity::debug, "Local description:\n{}", *message.Description);
       });
 
     _peerConnection->onLocalCandidate([=](const Candidate& candidate) {
@@ -46,6 +87,10 @@ namespace Warpr::Messaging
       _logger.log(log_severity::debug, "Local candidate: {}", *message.Candidate);
       });
 
+    _peerConnection->onStateChange([=](PeerConnection::State state) {
+      _logger.log(log_severity::information, "State changed to '{}'.", _stateNames[size_t(state)]);
+      });
+    
     //Create data channel
     _dataChannel = _peerConnection->createDataChannel("control");
   }

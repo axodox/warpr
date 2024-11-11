@@ -13,14 +13,18 @@ namespace Warpr::Messaging
     WebRtcClient(Axodox::Infrastructure::dependency_container* container);
 
   private:
+    static const std::string_view _stateNames[];
+
+    std::mutex _mutex;
     std::shared_ptr<WarpConfiguration> _settings;
     std::shared_ptr<WebSocketClient> _signaler;
 
     std::unique_ptr<rtc::PeerConnection> _peerConnection;
     std::shared_ptr<rtc::DataChannel> _dataChannel;
 
-    Axodox::Infrastructure::event_subscription _signalerConnectedSubscription;
+    Axodox::Infrastructure::event_subscription _signalerMessageReceivedSubscription;
 
-    void OnSignalerConnected(WebSocketClient* sender);
+    void OnSignalerMessageReceived(WebSocketClient* sender, const WarprMessage* message);
+    void Connect();
   };
 }

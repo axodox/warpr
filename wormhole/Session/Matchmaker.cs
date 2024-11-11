@@ -20,6 +20,10 @@ namespace Warpr.Gateway.Session
 
       source.MessageReceived += OnSourceMessageReceived;
       sink.MessageReceived += OnSinkMessageReceived;
+
+      var message = new PairingCompleteMessage();
+      source.SendMessage(message);
+      sink.SendMessage(message);
     }
 
     public void Dispose()

@@ -4,6 +4,7 @@ namespace Warpr.Gateway.Messages
 {
   [JsonPolymorphic(TypeDiscriminatorPropertyName = "Type")]
   [JsonDerivedType(typeof(ConnectionRequest), nameof(ConnectionRequest))]
+  [JsonDerivedType(typeof(PairingCompleteMessage), nameof(PairingCompleteMessage))]
   [JsonDerivedType(typeof(PeerConnectionDescriptionMessage), nameof(PeerConnectionDescriptionMessage))]
   [JsonDerivedType(typeof(PeerConnectionCandidateMessage), nameof(PeerConnectionCandidateMessage))]
   [JsonDerivedType(typeof(StreamingSourcesMessage), nameof(StreamingSourcesMessage))]
@@ -19,22 +20,20 @@ namespace Warpr.Gateway.Messages
     public ConnectionRequest() { }
   }
 
+  public class PairingCompleteMessage : WarprMessage { }
+
   public class PeerConnectionDescriptionMessage : WarprMessage
   {
     public string? Description { get; set; }
-
-    public PeerConnectionDescriptionMessage() { }
   }
 
   public class PeerConnectionCandidateMessage : WarprMessage
   {
     public string? Candidate { get; set; }
-    public PeerConnectionCandidateMessage() { }
   }
 
   public class StreamingSourcesMessage : WarprMessage
   {
     public string[]? Sources { get; set; }
-    public StreamingSourcesMessage() { }
   }
 }

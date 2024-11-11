@@ -18,6 +18,11 @@ namespace Warpr::Messaging
     return WarprMessageType::ConnectionRequest;
   }
 
+  WarprMessageType PairingCompleteMessage::Type() const
+  {
+    return WarprMessageType::PairingCompleteMessage;
+  }
+
   PeerConnectionDescriptionMessage::PeerConnectionDescriptionMessage() :
     Description(this, "Description")
   { }
@@ -42,6 +47,7 @@ namespace Axodox::Json
   const std::string json_serializer<unique_ptr<WarprMessage>>::type_names[] = {
     "Unknown",
     "ConnectionRequest",
+    "PairingCompleteMessage",
     "PeerConnectionDescriptionMessage",
     "PeerConnectionCandidateMessage"
   };
@@ -49,6 +55,7 @@ namespace Axodox::Json
   const std::function<unique_ptr<Warpr::Messaging::WarprMessage>()> json_serializer<unique_ptr<WarprMessage>>::type_factories[] = {
     [] { return nullptr; },
     [] { return make_unique<ConnectionRequest>(); },
+    [] { return make_unique<PairingCompleteMessage>(); },
     [] { return make_unique<PeerConnectionDescriptionMessage>(); },
     [] { return make_unique<PeerConnectionCandidateMessage>(); }
   };

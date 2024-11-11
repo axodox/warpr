@@ -7,6 +7,7 @@ namespace Warpr::Messaging
   {
     Unknown = 0,
     ConnectionRequest,
+    PairingCompleteMessage,
     PeerConnectionDescriptionMessage,
     PeerConnectionCandidateMessage
   };
@@ -22,6 +23,11 @@ namespace Warpr::Messaging
 
     ConnectionRequest();
 
+    virtual WarprMessageType Type() const override;
+  };
+
+  struct PairingCompleteMessage : public WarprMessage
+  {
     virtual WarprMessageType Type() const override;
   };
 

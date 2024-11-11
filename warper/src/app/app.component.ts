@@ -1,5 +1,7 @@
 import { Component } from '@angular/core';
 import { MessagingService } from './services/messaging.service';
+import { PeerConnectionCandidateMessage, PeerConnectionDescriptionMessage, WarprMessage, WarprMessageType } from './data/messages';
+import { IMessagingClient } from './networking/messaging-client';
 
 @Component({
   selector: 'app-root',
@@ -9,8 +11,12 @@ import { MessagingService } from './services/messaging.service';
 export class AppComponent {
   title = 'warper';
 
+  private _peerConnection: RTCPeerConnection;
+
   constructor(
-    private messagingService: MessagingService) {
+    private _messagingService: MessagingService) {
+
+    _messagingService.MessageReceived.Subscribe((sender: IMessagingClient<WarprMessage>, message: WarprMessage) => this.MessageReceived(sender, message));
 
     let config: RTCConfiguration = {
       iceServers: [
@@ -18,11 +24,37 @@ export class AppComponent {
       ]      
     };
 
-    let peerConnection = new RTCPeerConnection(config);
+    this._peerConnection = new RTCPeerConnection(config);
+    this._peerConnection.onicecandidate = (event) => this.OnIceCandidateAdded(event.candidate?.candidate);
     
+    let channel = this._peerConnection.createDataChannel("test");
+  }
 
-    let channel = peerConnection.createDataChannel("test");
-    
-    console.log(peerConnection.localDescription);
+  private OnIceCandidateAdded(candidate?: string) {
+    if (candidate == null) return;
+
+    let message = new PeerConnectionCandidateMessage();
+    message.Candidate = candidate;
+    this._messagingService.SendMessage(message);
+  }
+
+  private async MessageReceived(sender: IMessagingClient<WarprMessage>, message: WarprMessage) {
+
+    switch (message.Type) {
+      case WarprMessageType.PeerConnectionDescriptionMessage:
+        await this._peerConnection.setRemoteDescription({ "type": "offer", "sdp": message.Description });
+        let answer = await this._peerConnection.createAnswer();
+        await this._peerConnection.setLocalDescription(answer);
+
+        let answerMessage = new PeerConnectionDescriptionMessage();
+        answerMessage.Description = answer.sdp;
+        this._messagingService.SendMessage(answerMessage);
+
+        break;
+      case WarprMessageType.PeerConnectionCandidateMessage:
+        await this._peerConnection.addIceCandidate({ "candidate": message.Candidate, "sdpMid": "0" });
+        break;
+    }
+
   }
 }
