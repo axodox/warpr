@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Warpr.Gateway.Session;
 using Warpr.Gateway.Streams;
 
 namespace Warpr.Gateway.Sources

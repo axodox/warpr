@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.HttpOverrides;
 using System.Reflection;
+using Warpr.Gateway.Session;
 using Warpr.Gateway.Sources;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -18,9 +19,12 @@ builder.Services
 
 builder.Services
   .AddSingleton<IStreamingSourceRepository, StreamingSourceRepository>()
-  .AddSingleton<IStreamingSinkRepository, StreamingSinkRepository>();
+  .AddSingleton<IStreamingSinkRepository, StreamingSinkRepository>()
+  .AddSingleton<IMatchmaker, Matchmaker>();
 
 var app = builder.Build();
+
+app.Services.GetService<IMatchmaker>();
 
 // Configure the HTTP request pipeline.
 app.UseDefaultFiles();

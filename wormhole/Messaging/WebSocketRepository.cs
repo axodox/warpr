@@ -10,6 +10,8 @@ namespace Warpr.Gateway.Messaging
   public interface IWebSocketRepository
   {
     void RegisterStream(IWebSocketStream stream);
+
+    event EventHandler<WebSocketConnection> ConnectionAdded, ConnectionRemoved;
   }
 
   public class WebSocketConnection
@@ -27,7 +29,7 @@ namespace Warpr.Gateway.Messaging
       _stream.SendMessageAsync(binaryMessage, WebSocketMessageType.Text);
     }
 
-    public EventHandler<WarprMessage> MessageReceived;
+    public event EventHandler<WarprMessage>? MessageReceived;
 
     public WebSocketConnection(IWebSocketStream stream)
     {
@@ -48,7 +50,9 @@ namespace Warpr.Gateway.Messaging
   public abstract class WebSocketRepository : IWebSocketRepository
   {
     private readonly ILogger _logger;
-    private readonly ConcurrentDictionary<string, WebSocketConnection> _sources = new();
+    private readonly ConcurrentDictionary<string, WebSocketConnection> _connections = new();
+
+    public event EventHandler<WebSocketConnection>? ConnectionAdded, ConnectionRemoved;
 
     public WebSocketRepository(
       ILogger logger)
@@ -72,10 +76,13 @@ namespace Warpr.Gateway.Messaging
 
       if (warprMessage is ConnectionRequest request)
       {
-        var source = new WebSocketConnection((sender as IWebSocketStream)!);
-        source.SessionId = request.SessionId;
-        _sources[source.EndPoint] = source;
-        _logger.LogInformation($"{source.EndPoint} connected.");
+        var connection = new WebSocketConnection((sender as IWebSocketStream)!);
+        connection.SessionId = request.SessionId;
+        _connections[connection.EndPoint] = connection;
+
+        ConnectionAdded?.Invoke(this, connection);
+
+        _logger.LogInformation($"{connection.EndPoint} connected.");
       }
     }
 
@@ -87,7 +94,11 @@ namespace Warpr.Gateway.Messaging
     private void OnStreamDisconnected(object? sender, EventArgs e)
     {
       var stream = (sender as IWebSocketStream)!;
-      _sources.TryRemove(stream.EndPoint, out var _);
+      if (_connections.TryRemove(stream.EndPoint, out var connection))
+      {
+        ConnectionRemoved?.Invoke(this, connection);
+      }
+
       _logger.LogInformation($"{stream.EndPoint} disconnected.");
     }
   }
