@@ -93,5 +93,6 @@ namespace Warpr::Messaging
     
     //Create data channel
     _dataChannel = _peerConnection->createDataChannel("control");
+    
   }
 }

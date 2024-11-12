@@ -108,6 +108,8 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Capture\FrameSource.cpp" />
+    <ClCompile Include="Capture\WindowSource.cpp" />
     <ClCompile Include="Core\WarpConfiguration.cpp" />
     <ClCompile Include="Core\WarpDrive.cpp" />
     <ClCompile Include="Infrastructure\RtcLogger.cpp" />
@@ -126,6 +128,8 @@
     <None Include="vcpkg.json" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Capture\FrameSource.h" />
+    <ClInclude Include="Capture\WindowSource.h" />
     <ClInclude Include="Core\WarpConfiguration.h" />
     <ClInclude Include="Core\WarpDrive.h" />
     <ClInclude Include="Infrastructure\RtcLogger.h" />
