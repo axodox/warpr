@@ -1,6 +1,7 @@
 #include "warpr_includes.h"
 #include "Core/WarpDrive.h"
 #include "Capture/WindowSource.h"
+#include "Encoder/VideoEncoder.h"
 
 using namespace Warpr;
 using namespace std;
@@ -8,10 +9,13 @@ using namespace std;
 int main()
 {
   using namespace Warpr::Capture;
+  using namespace Warpr::Encoder;
 
-  WindowSourceDescription description;
+  VideoEncoder encoder{};
+
+  /*WindowSourceDescription description;
   description.Source = winrt::Windows::Graphics::Display::DisplayServices::FindAll().front();
-  auto frameSource = FrameSource::Create(description);
+  auto frameSource = FrameSource::Create(description);*/
   Sleep(100000);
 
   return 0;
