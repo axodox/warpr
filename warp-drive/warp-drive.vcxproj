@@ -108,11 +108,15 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Capture\FrameProvider.cpp" />
+    <ClCompile Include="Core\WarpSession.cpp" />
     <ClCompile Include="Encoder\VideoEncoder.cpp" />
     <ClCompile Include="Capture\FrameSource.cpp" />
     <ClCompile Include="Capture\WindowSource.cpp" />
     <ClCompile Include="Core\WarpConfiguration.cpp" />
     <ClCompile Include="Core\WarpDrive.cpp" />
+    <ClCompile Include="Encoder\VideoPreprocessor.cpp" />
+    <ClCompile Include="Graphics\GraphicsDevice.cpp" />
     <ClCompile Include="Infrastructure\RtcLogger.cpp" />
     <ClCompile Include="Messaging\Messages.cpp" />
     <ClCompile Include="Messaging\WebRtcClient.cpp" />
@@ -129,11 +133,15 @@
     <None Include="vcpkg.json" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Capture\FrameProvider.h" />
+    <ClInclude Include="Core\WarpSession.h" />
     <ClInclude Include="Encoder\VideoEncoder.h" />
     <ClInclude Include="Capture\FrameSource.h" />
     <ClInclude Include="Capture\WindowSource.h" />
     <ClInclude Include="Core\WarpConfiguration.h" />
     <ClInclude Include="Core\WarpDrive.h" />
+    <ClInclude Include="Encoder\VideoPreprocessor.h" />
+    <ClInclude Include="Graphics\GraphicsDevice.h" />
     <ClInclude Include="Infrastructure\RtcLogger.h" />
     <ClInclude Include="Messaging\Messages.h" />
     <ClInclude Include="Messaging\WebRtcClient.h" />

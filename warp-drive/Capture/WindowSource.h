@@ -1,7 +1,7 @@
 #pragma once
 #include "FrameSource.h"
+#include "Graphics/GraphicsDevice.h"
 
-#include <winrt/base.h>
 #include <winrt/windows.foundation.h>
 #include <winrt/windows.graphics.h>
 #include <winrt/windows.graphics.capture.h>
@@ -17,16 +17,21 @@ namespace Warpr::Capture
     virtual FrameSourceKind Type() const override;
 
     std::variant<winrt::Windows::Graphics::DisplayId, winrt::Windows::UI::WindowId> Source;
+
+    WindowSourceDescription(std::variant<winrt::Windows::Graphics::DisplayId, winrt::Windows::UI::WindowId> source);
   };
 
   class WindowSource : public FrameSource
   {
+    inline static const Axodox::Infrastructure::logger _logger{ "WindowSource" };
+
   public:
-    WindowSource(const WindowSourceDescription& description);
+    WindowSource(Axodox::Infrastructure::dependency_container* container, const WindowSourceDescription* description);
 
   private:
     winrt::com_ptr<ID3D11Device> _device;
     winrt::Windows::Graphics::Capture::GraphicsCaptureItem _captureItem{ nullptr };
     winrt::Windows::Graphics::Capture::Direct3D11CaptureFramePool _framePool{ nullptr };
+    winrt::Windows::Graphics::Capture::GraphicsCaptureSession _session{ nullptr };
   };
 }

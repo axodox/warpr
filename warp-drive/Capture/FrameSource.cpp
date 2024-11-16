@@ -2,6 +2,7 @@
 #include "FrameSource.h"
 #include "WindowSource.h"
 
+using namespace Axodox::Infrastructure;
 using namespace std;
 
 namespace Warpr::Capture
@@ -10,12 +11,18 @@ namespace Warpr::Capture
     FrameArrived(_events)
   { }
 
-  std::unique_ptr<FrameSource> FrameSource::Create(const FrameSourceDescription& description)
+  std::unique_ptr<FrameSource> FrameSource::Create(Axodox::Infrastructure::dependency_container* container, const FrameSourceDescription* description)
   {
-    switch (description.Type())
+    if (!description)
+    {
+      _logger.log(log_severity::warning, "No frame source configured, there is nothing to stream.");
+      return nullptr;
+    }
+
+    switch (description->Type())
     {
     case FrameSourceKind::Window:
-      return make_unique<WindowSource>(static_cast<const WindowSourceDescription&>(description));
+      return make_unique<WindowSource>(container, static_cast<const WindowSourceDescription*>(description));
     default:
       throw logic_error("Unsupported frame source type description encountered.");
     }

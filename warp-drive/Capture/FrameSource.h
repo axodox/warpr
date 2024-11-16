@@ -20,7 +20,7 @@ namespace Warpr::Capture
 
   class FrameSource
   {
-  private:
+    inline static const Axodox::Infrastructure::logger _logger{ "FrameSource" };
     Axodox::Infrastructure::event_owner _events;
 
   public:
@@ -29,7 +29,7 @@ namespace Warpr::Capture
     FrameSource();
     virtual ~FrameSource() = default;
 
-    static std::unique_ptr<FrameSource> Create(const FrameSourceDescription& description);
+    static std::unique_ptr<FrameSource> Create(Axodox::Infrastructure::dependency_container* container, const FrameSourceDescription* description);
 
   protected:
     void PushFrame(const Frame& frame);
