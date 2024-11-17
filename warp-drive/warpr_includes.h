@@ -1,4 +1,5 @@
 #pragma once
+#define NOMINMAX
 #include <shlwapi.h>
 
 #include "Include/Axodox.Infrastructure.h"

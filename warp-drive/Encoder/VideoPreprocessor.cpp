@@ -116,7 +116,7 @@ namespace Warpr::Encoder
           .Quality = 0 
         },
         .Usage = D3D11_USAGE_DEFAULT,
-        .BindFlags = D3D11_BIND_RENDER_TARGET,
+        .BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE,
         .CPUAccessFlags = 0,
         .MiscFlags = 0
       };

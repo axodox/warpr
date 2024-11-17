@@ -23,10 +23,17 @@ namespace Warpr::Encoder
 
   private:
     NV_ENCODE_API_FUNCTION_LIST _nvenc;
-    void* _encoder;
+    void* _encoder = nullptr;
+    void* _frameResource = nullptr;
+    void* _inputResource = nullptr;
+    void* _outputBuffer = nullptr;
+    uint32_t _frameIndex = 0u;
     EncoderProperties _encoderProperties{};
 
     EncoderProperties GetEncoderProperties(const Capture::Frame& frame);
     void EnsureEncoder(const EncoderProperties& properties);
+
+    void RegisterFrame(const Capture::Frame& frame);
+    void ReleaseResources();
   };
 }
