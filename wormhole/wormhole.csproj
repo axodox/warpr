@@ -23,4 +23,10 @@
     <ProjectReference Include="..\warper\warper.esproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="axodox-pc.pfx">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>

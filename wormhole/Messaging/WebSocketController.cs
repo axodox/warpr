@@ -1,9 +1,34 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Routing;
+using System.Diagnostics.CodeAnalysis;
 using Warpr.Gateway.Extensions;
 using Warpr.Gateway.Messaging;
 
 namespace Warpr.Gateway.Streams
 {
+  public class HttpWebSocketMethodAttribute : HttpMethodAttribute
+  {
+    private static readonly IEnumerable<string> _supportedMethods = new[] { "GET", "CONNECT" };
+
+    /// <summary>
+    /// Creates a new <see cref="HttpGetAttribute"/>.
+    /// </summary>
+    public HttpWebSocketMethodAttribute()
+        : base(_supportedMethods)
+    {
+    }
+
+    /// <summary>
+    /// Creates a new <see cref="HttpGetAttribute"/> with the given route template.
+    /// </summary>
+    /// <param name="template">The route template. May not be null.</param>
+    public HttpWebSocketMethodAttribute([StringSyntax("Route")] string template)
+        : base(_supportedMethods, template)
+    {
+      ArgumentNullException.ThrowIfNull(template);
+    }
+  }
+
   public abstract class WebSocketController : ControllerBase
   {
     private readonly ILogger _logger;
@@ -17,7 +42,7 @@ namespace Warpr.Gateway.Streams
       _repository = repository;
     }
 
-    [HttpGet("connect")]
+    [HttpWebSocketMethod("connect")]
     public ActionResult Connect()
     {
       var connection = Request.HttpContext.Connection;
