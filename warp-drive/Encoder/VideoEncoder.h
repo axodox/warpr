@@ -5,7 +5,7 @@
 
 namespace Warpr::Encoder
 {
-  enum class FrameType
+  enum class FrameType : uint32_t
   {
     Unknown,
     Key,

@@ -29,6 +29,8 @@ namespace Warpr::Messaging
 
   void WebRtcClient::SendMessage(std::span<const uint8_t> bytes, WebRtcChannel channelType)
   {
+    if (!IsConnected()) return;
+
     DataChannel* channel = nullptr;
 
     switch (channelType)
@@ -41,7 +43,7 @@ namespace Warpr::Messaging
       break;
     }
 
-    channel->send(reinterpret_cast<const std::byte*>(bytes.data()), bytes.size());
+    if (channel) channel->send(reinterpret_cast<const std::byte*>(bytes.data()), bytes.size());
   }
 
   void WebRtcClient::OnSignalerMessageReceived(WebSocketClient* sender, const WarprMessage* message)
