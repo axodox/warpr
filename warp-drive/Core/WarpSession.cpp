@@ -22,6 +22,9 @@ namespace Warpr::Core
   {
     lock_guard lock(_mutex);
 
+    static uint32_t counter = 0;
+    if (counter++ % 2 != 0) return;
+
     if (!_webRtcClient->IsConnected())
     {
       _isKeyFrameSent = false;
@@ -32,17 +35,24 @@ namespace Warpr::Core
     _videoPreprocessor->ProcessFrame(inputFrame);
     
     auto encodedFrame = _videoEncoder->EncodeFrame(inputFrame);
-    if (encodedFrame.Type == FrameType::Key) _logger.log(log_severity::information, "Key frame.");
-    
+    if (encodedFrame.Type == FrameType::Key)
+    {
+      _logger.log(log_severity::information, "Key frame {}.", encodedFrame.Index);
+    }
+
     if (_isKeyFrameSent || encodedFrame.Type == FrameType::Key)
     {
       _isKeyFrameSent = true;
-
-      memory_stream message;
-      message.write(encodedFrame.Index);
-      message.write(encodedFrame.Type);
-      message.write(encodedFrame.Bytes);
-      _webRtcClient->SendMessage(message, WebRtcChannel::LowLatency);
+      SendFrame(encodedFrame);
     }
+  }
+
+  void WarpSession::SendFrame(const Encoder::EncodedFrame& frame)
+  {
+    memory_stream message;
+    message.write(frame.Type);
+    message.write(frame.Index);
+    message.write(frame.Bytes);
+    _webRtcClient->SendMessage(message, WebRtcChannel::LowLatency);
   }
 }

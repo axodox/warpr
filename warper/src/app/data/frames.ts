@@ -13,8 +13,9 @@ export class EncodedFrame {
 
   public constructor(buffer: ArrayBuffer) {
     let stream = new ArrayStream(buffer);
-    this.Index = stream.ReadUInt32();
+
     this.Type = stream.ReadUInt32();
+    this.Index = stream.ReadUInt32();
     this.Bytes = stream.ReadBuffer();
   }
 }

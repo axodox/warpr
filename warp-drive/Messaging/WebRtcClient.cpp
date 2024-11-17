@@ -2,11 +2,13 @@
 #include "WebRtcClient.h"
 
 using namespace Axodox::Infrastructure;
+using namespace Axodox::Storage;
 using namespace rtc;
 using namespace std;
 
 namespace Warpr::Messaging
 {
+  const size_t WebRtcClient::_maxMessageSize = 16 * 1024;
   const std::string_view WebRtcClient::_stateNames[] = {
     "New",
     "Connecting",
@@ -29,8 +31,10 @@ namespace Warpr::Messaging
 
   void WebRtcClient::SendMessage(std::span<const uint8_t> bytes, WebRtcChannel channelType)
   {
+    //If we are not connected then do not send
     if (!IsConnected()) return;
 
+    //Select channel
     DataChannel* channel = nullptr;
 
     switch (channelType)
@@ -43,7 +47,39 @@ namespace Warpr::Messaging
       break;
     }
 
-    if (channel) channel->send(reinterpret_cast<const std::byte*>(bytes.data()), bytes.size());
+    if (!channel) return;
+
+    //Split to fragments and send
+    {
+      auto messageSize = _maxMessageSize - 16;
+
+      memory_stream stream;
+      stream.reserve(_maxMessageSize);
+
+      size_t position = 0u;
+      auto fragmentIndex = 0u;
+      while (position < bytes.size())
+      {
+        auto fragmentLength = min(messageSize, bytes.size() - position);
+        stream.reset();
+
+        stream.write(uint32_t(_messageIndex));
+        stream.write(uint32_t(bytes.size()));
+        stream.write(uint32_t(messageSize));
+        stream.write(uint32_t(fragmentIndex++));
+        stream.write(bytes.subspan(position, fragmentLength));
+
+        channel->send(reinterpret_cast<const std::byte*>(stream.data()), stream.length());
+        position += fragmentLength;
+
+        if (position == bytes.size())
+        {
+          __nop();
+        }
+      }
+
+      _messageIndex++;
+    }
   }
 
   void WebRtcClient::OnSignalerMessageReceived(WebSocketClient* sender, const WarprMessage* message)
@@ -116,11 +152,11 @@ namespace Warpr::Messaging
 
     //Create data channel
     _reliableChannel = _peerConnection->createDataChannel("reliable");
-    _lowLatencyChannel = _peerConnection->createDataChannel("low_latency", {
+    _lowLatencyChannel = _peerConnection->createDataChannel("low_latency"/*, {
       .reliability = {
         .unordered = true,
         .maxRetransmits = 0
       }
-    });
+    }*/);
   }
 }

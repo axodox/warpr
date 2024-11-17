@@ -26,5 +26,7 @@ namespace Warpr::Core
     Axodox::Infrastructure::event_subscription _frameArrivedSubscription;
 
     void OnFrameArrived(Capture::FrameSource* sender, const Capture::Frame& eventArgs);
+
+    void SendFrame(const Encoder::EncodedFrame& frame);
   };
 }

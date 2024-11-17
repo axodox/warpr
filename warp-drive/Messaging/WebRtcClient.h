@@ -22,7 +22,10 @@ namespace Warpr::Messaging
     void SendMessage(std::span<const uint8_t> bytes, WebRtcChannel channelType);
 
   private:
+    static const size_t _maxMessageSize;
     static const std::string_view _stateNames[];
+
+    uint32_t _messageIndex = 0;
 
     std::mutex _mutex;
     std::shared_ptr<WarpConfiguration> _settings;

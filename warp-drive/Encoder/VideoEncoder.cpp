@@ -192,6 +192,7 @@ namespace Warpr::Encoder
       encodeConfig.encodeCodecConfig.hevcConfig.idrPeriod = encodeConfig.gopLength;
       encodeConfig.encodeCodecConfig.hevcConfig.sliceMode = 3;
       encodeConfig.encodeCodecConfig.hevcConfig.sliceModeData = 2048;
+      encodeConfig.encodeCodecConfig.hevcConfig.repeatSPSPPS = 1;
       encodeConfig.frameIntervalP = 1;
 
       NV_ENC_INITIALIZE_PARAMS description{

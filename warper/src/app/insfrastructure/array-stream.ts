@@ -87,7 +87,14 @@ export class ArrayStream {
 
   public ReadBuffer(): ArrayBuffer {
     let length = this.ReadUInt32();
-    let result = this._view.buffer.slice(this._position, length);
+    let result = this._view.buffer.slice(this._position, this._position + length);
+    this._position += length;
+    return result;
+  }
+
+  public ReadToEnd(): ArrayBuffer {
+    let length = this._view.buffer.byteLength - this._position;
+    let result = this._view.buffer.slice(this._position, this._position + length);
     this._position += length;
     return result;
   }
@@ -95,7 +102,7 @@ export class ArrayStream {
   public ReadString() {
     let length = this.ReadUInt32();
     let decoder = new TextDecoder();
-    let result = decoder.decode(this._view.buffer.slice(this._position, length));
+    let result = decoder.decode(this._view.buffer.slice(this._position, this._position + length));
     this._position += length;
     return result;
   }

@@ -37,7 +37,10 @@
             "styles": [
               "src/styles.css"
             ],
-            "scripts": []
+            "scripts": [],
+            "loader": {
+              ".wgsl": "text"
+            }
           },
           "configurations": {
             "production": {

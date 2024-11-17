@@ -3,6 +3,8 @@ import { MessagingService } from './messaging.service';
 import { PeerConnectionCandidateMessage, PeerConnectionDescriptionMessage, WarprMessage, WarprMessageType } from '../data/messages';
 import { IMessagingClient } from '../networking/messaging-client';
 import { EncodedFrame, FrameType } from '../data/frames';
+import { EventOwner, EventPublisher } from '../insfrastructure/events';
+import { MessageAssembler } from '../insfrastructure/message_assembler';
 
 @Injectable({
   providedIn: 'root'
@@ -12,6 +14,10 @@ export class StreamingService {
   private _peerConnection: RTCPeerConnection;
   private _reliableConnection?: RTCDataChannel;
   private _lowLatencyConnection?: RTCDataChannel;
+  private _messageBuilder = new MessageAssembler();
+
+  private readonly _events = new EventOwner();
+  public readonly FrameReceived = new EventPublisher<StreamingService, EncodedFrame>(this._events);
 
   constructor(
     private _messagingService: MessagingService) {
@@ -42,11 +48,12 @@ export class StreamingService {
   }
 
   private OnLowLatencyMessage(event: MessageEvent<any>) {
-    let buffer = event.data as ArrayBuffer;
-    let frame = new EncodedFrame(buffer);
-    if (frame.Type == FrameType.Key) {
-      console.log("Key frame received");
-    }
+
+    let message = this._messageBuilder.PushMessage(event.data as ArrayBuffer);
+    if (!message) return;
+
+    let frame = new EncodedFrame(message);
+    this._events.Raise(this.FrameReceived, this, frame);
   }
 
   private OnIceCandidateAdded(candidate?: string) {
