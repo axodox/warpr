@@ -58,7 +58,7 @@ namespace Warpr::Encoder
         .apiVersion = NVENCAPI_VERSION
       };
       check_nvenc(_nvenc.nvEncOpenEncodeSessionEx(&encodeSessionExParams, &_encoder));
-
+      
       _logger.log(log_severity::information, "Encode session ready.");
     }
   }
@@ -68,7 +68,7 @@ namespace Warpr::Encoder
     ReleaseResources();
   }
 
-  void VideoEncoder::PushFrame(const Capture::Frame& frame)
+  EncodedFrame VideoEncoder::EncodeFrame(const Capture::Frame& frame)
   {
     //Ensure session
     auto encoderProperties = GetEncoderProperties(frame);
@@ -124,27 +124,33 @@ namespace Warpr::Encoder
     }
 
     //Get output
-    vector<uint32_t> slices(2048);
-    vector<uint8_t> buffer;
+    EncodedFrame result;
     {
+      result.Slices.resize(2048);
+
       NV_ENC_LOCK_BITSTREAM description{
         .version = NV_ENC_LOCK_BITSTREAM_VER,
         .doNotWait = false,
         .outputBitstream = _outputBuffer,
-        .sliceOffsets = slices.data()
+        .sliceOffsets = result.Slices.data()
       };
       check_nvenc(_nvenc.nvEncLockBitstream(_encoder, &description));
 
       if (description.bitstreamBufferPtr)
       {
-        buffer.resize(description.bitstreamSizeInBytes);
-        memcpy(buffer.data(), description.bitstreamBufferPtr, buffer.size());
+        result.Bytes.resize(description.bitstreamSizeInBytes);
+        memcpy(result.Bytes.data(), description.bitstreamBufferPtr, result.Bytes.size());
       }
 
-      slices.resize(description.numSlices);
+      result.Slices.resize(description.numSlices);
+      result.Index = description.frameIdx;
+      result.Type = description.pictureType == NV_ENC_PIC_TYPE_IDR ? FrameType::Key : FrameType::Delta;
 
       check_nvenc(_nvenc.nvEncUnlockBitstream(_encoder, _outputBuffer));
     }
+
+    //Return result
+    return result;
   }
 
   VideoEncoder::EncoderProperties VideoEncoder::GetEncoderProperties(const Capture::Frame& frame)
@@ -163,6 +169,8 @@ namespace Warpr::Encoder
     if (_encoderProperties == encoderProperties) return;
     _encoderProperties = encoderProperties;
 
+    _logger.log(log_severity::information, "Encoder property change detected.");
+
     //Initialize encoder
     {
       _logger.log(log_severity::information, "Initializing encoder...");
@@ -176,6 +184,7 @@ namespace Warpr::Encoder
       //encodeConfig.rcParams.vbvBufferSize = 0;
       //encodeConfig.rcParams.vbvInitialDelay = 0;
       //encodeConfig.rcParams.maxBitRate = 2500;
+      encodeConfig.gopLength = 120; //Key frame interval
 
       encodeConfig.encodeCodecConfig.hevcConfig.inputBitDepth = NV_ENC_BIT_DEPTH_8;
       encodeConfig.encodeCodecConfig.hevcConfig.outputBitDepth = NV_ENC_BIT_DEPTH_8;
@@ -247,6 +256,8 @@ namespace Warpr::Encoder
     if (frame.get() == _frameResource) return;
     _frameResource = frame.get();
 
+    if (_inputResource) check_nvenc(_nvenc.nvEncUnregisterResource(_encoder, _inputResource));
+
     _logger.log(log_severity::information, "Registering input resource...");
     NV_ENC_REGISTER_RESOURCE description{
       .version = NV_ENC_REGISTER_RESOURCE_VER,
@@ -264,6 +275,7 @@ namespace Warpr::Encoder
       .reserved1 = {},
       .reserved2 = {}
     };
+    
     check_nvenc(_nvenc.nvEncRegisterResource(_encoder, &description));
     _inputResource = description.registeredResource;
     _logger.log(log_severity::information, "Input resource registered.");
@@ -271,8 +283,10 @@ namespace Warpr::Encoder
 
   void VideoEncoder::ReleaseResources()
   {
+    _logger.log(log_severity::information, "Releasing resources...");
     if (_inputResource) check_nvenc(_nvenc.nvEncUnregisterResource(_encoder, _inputResource));
     if (_outputBuffer) check_nvenc(_nvenc.nvEncDestroyBitstreamBuffer(_encoder, _outputBuffer));
     if (_encoder) check_nvenc(_nvenc.nvEncDestroyEncoder(_encoder));
+    _logger.log(log_severity::information, "Resources released.");
   }
 }

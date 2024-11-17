@@ -4,6 +4,12 @@
 
 namespace Warpr::Messaging
 {
+  enum class WebRtcChannel
+  {
+    Reliable,
+    LowLatency
+  };
+
   class WebRtcClient
   {
     inline static const Axodox::Infrastructure::logger _logger{ "WebRtcClient" };
@@ -11,6 +17,9 @@ namespace Warpr::Messaging
 
   public:
     WebRtcClient(Axodox::Infrastructure::dependency_container* container);
+
+    bool IsConnected() const;
+    void SendMessage(std::span<const uint8_t> bytes, WebRtcChannel channelType);
 
   private:
     static const std::string_view _stateNames[];
@@ -20,7 +29,8 @@ namespace Warpr::Messaging
     std::shared_ptr<WebSocketClient> _signaler;
 
     std::unique_ptr<rtc::PeerConnection> _peerConnection;
-    std::shared_ptr<rtc::DataChannel> _dataChannel;
+    std::shared_ptr<rtc::DataChannel> _reliableChannel;
+    std::shared_ptr<rtc::DataChannel> _lowLatencyChannel;
 
     Axodox::Infrastructure::event_subscription _signalerMessageReceivedSubscription;
 

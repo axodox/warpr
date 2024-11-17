@@ -5,7 +5,6 @@ using namespace Axodox::Infrastructure;
 using namespace rtc;
 using namespace std;
 
-
 namespace Warpr::Messaging
 {
   const std::string_view WebRtcClient::_stateNames[] = {
@@ -22,6 +21,28 @@ namespace Warpr::Messaging
     _signaler(container->resolve<WebSocketClient>()),
     _signalerMessageReceivedSubscription(_signaler->MessageReceived({ this, &WebRtcClient::OnSignalerMessageReceived }))
   { }
+
+  bool WebRtcClient::IsConnected() const
+  {
+    return _peerConnection && _peerConnection->state() == PeerConnection::State::Connected;
+  }
+
+  void WebRtcClient::SendMessage(std::span<const uint8_t> bytes, WebRtcChannel channelType)
+  {
+    DataChannel* channel = nullptr;
+
+    switch (channelType)
+    {
+    case WebRtcChannel::Reliable:
+      channel = _reliableChannel.get();
+      break;
+    case WebRtcChannel::LowLatency:
+      channel = _lowLatencyChannel.get();
+      break;
+    }
+
+    channel->send(reinterpret_cast<const std::byte*>(bytes.data()), bytes.size());
+  }
 
   void WebRtcClient::OnSignalerMessageReceived(WebSocketClient* sender, const WarprMessage* message)
   {
@@ -90,9 +111,14 @@ namespace Warpr::Messaging
     _peerConnection->onStateChange([=](PeerConnection::State state) {
       _logger.log(log_severity::information, "State changed to '{}'.", _stateNames[size_t(state)]);
       });
-    
+
     //Create data channel
-    _dataChannel = _peerConnection->createDataChannel("control");
-    
+    _reliableChannel = _peerConnection->createDataChannel("reliable");
+    _lowLatencyChannel = _peerConnection->createDataChannel("low_latency", {
+      .reliability = {
+        .unordered = true,
+        .maxRetransmits = 0
+      }
+    });
   }
 }

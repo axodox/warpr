@@ -5,6 +5,21 @@
 
 namespace Warpr::Encoder
 {
+  enum class FrameType
+  {
+    Unknown,
+    Key,
+    Delta
+  };
+
+  struct EncodedFrame
+  {
+    uint32_t Index = 0;
+    FrameType Type = FrameType::Unknown;
+    std::vector<uint8_t> Bytes;
+    std::vector<uint32_t> Slices;
+  };
+
   class VideoEncoder
   {
     inline static const Axodox::Infrastructure::logger _logger{ "VideoEncoder" };
@@ -19,7 +34,7 @@ namespace Warpr::Encoder
     VideoEncoder(Axodox::Infrastructure::dependency_container* container);
     ~VideoEncoder();
 
-    void PushFrame(const Capture::Frame& frame);
+    EncodedFrame EncodeFrame(const Capture::Frame& frame);
 
   private:
     NV_ENCODE_API_FUNCTION_LIST _nvenc;

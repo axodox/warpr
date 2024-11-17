@@ -5,6 +5,7 @@
 #include "Include/Axodox.Infrastructure.h"
 #include "Include/Axodox.Json.h"
 #include "Include/Axodox.Threading.h"
+#include "Include/Axodox.Storage.h"
 
 #include "rtc/rtc.hpp"
 
