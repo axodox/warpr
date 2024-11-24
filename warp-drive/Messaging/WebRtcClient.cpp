@@ -8,7 +8,7 @@ using namespace std;
 
 namespace Warpr::Messaging
 {
-  const size_t WebRtcClient::_maxMessageSize = 16 * 1024;
+  const size_t WebRtcClient::_maxMessageSize = 256 * 1024;
   const std::string_view WebRtcClient::_stateNames[] = {
     "New",
     "Connecting",
@@ -79,6 +79,19 @@ namespace Warpr::Messaging
       }
 
       _messageIndex++;
+    }
+
+    using namespace std::chrono;
+    static steady_clock::time_point _lastReportingTime = {};
+    static uint64_t _dataSent = 0;
+    _dataSent += bytes.size();
+    auto now = steady_clock::now();
+    if (now - _lastReportingTime > 1s)
+    {
+      _logger.log(log_severity::debug, L"Output buffer size: {} bytes", channel->bufferedAmount());
+      _logger.log(log_severity::debug, L"Output data rate: {} bytes/second", _dataSent);
+      _lastReportingTime = now;
+      _dataSent = 0;
     }
   }
 

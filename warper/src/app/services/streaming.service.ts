@@ -47,10 +47,21 @@ export class StreamingService {
     }
   }
 
+  private _lastRefreshTime = performance.now();
+  private _sum = 0;
+  private _count = 0;
+
   private OnLowLatencyMessage(event: MessageEvent<any>) {
 
     let message = this._messageBuilder.PushMessage(event.data as ArrayBuffer);
     if (!message) return;
+
+    let now = performance.now();
+    this._sum += now - this._lastRefreshTime;
+    this._count++;
+    this._lastRefreshTime = now;
+
+    if (this._count % 120 == 0) console.log(`Message decoded ${this._sum / this._count}ms`);
 
     let frame = new EncodedFrame(message);
     this._events.Raise(this.FrameReceived, this, frame);
