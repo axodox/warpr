@@ -23,7 +23,7 @@ namespace Warpr::Core
     lock_guard lock(_mutex);
 
     static uint32_t counter = 0;
-    if (counter++ % 2 != 0) return;
+    //if (counter++ % 2 != 0) return;
 
     if (!_webRtcClient->IsConnected())
     {

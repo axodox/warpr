@@ -35,14 +35,15 @@ export class StreamHostComponent {
 
     this._decoder.configure({
       codec: "hvc1.1.6.L93.B0",
-      codedWidth: 2560,
-      codedHeight: 1440
+      codedWidth: 3840,
+      codedHeight: 2160,
+      hardwareAcceleration: "prefer-hardware"
     });
   }
 
   private async ngAfterViewInit() {
-    this._canvas!.nativeElement.width = 2560;
-    this._canvas!.nativeElement.height = 1440;
+    this._canvas!.nativeElement.width = 3840;
+    this._canvas!.nativeElement.height = 2160;
 
     console.log("Initializing stream host...");
     this._adapter = await navigator.gpu.requestAdapter() ?? undefined;

@@ -5,8 +5,8 @@ using Warpr.Gateway.Sources;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.WebHost.UseKestrel(p => {
-  p.ListenAnyIP(5000);
-  p.ListenAnyIP(5001, p => p.UseHttps("axodox-pc.pfx", "p2cyfqR4"));
+  p.ListenAnyIP(5164);
+  p.ListenAnyIP(7074, p => p.UseHttps("axodox-pc.pfx", "p2cyfqR4"));
 });
 
 // Add services to the container.

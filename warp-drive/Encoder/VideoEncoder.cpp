@@ -7,6 +7,7 @@ using namespace Axodox::Infrastructure;
 using namespace DirectX;
 using namespace Warpr::Graphics;
 using namespace std;
+using namespace std::chrono;
 using namespace winrt;
 
 namespace
@@ -70,6 +71,8 @@ namespace Warpr::Encoder
 
   EncodedFrame VideoEncoder::EncodeFrame(const Capture::Frame& frame)
   {
+    auto start = steady_clock::now();
+
     //Ensure session
     auto encoderProperties = GetEncoderProperties(frame);
     EnsureEncoder(encoderProperties);
@@ -149,6 +152,10 @@ namespace Warpr::Encoder
       check_nvenc(_nvenc.nvEncUnlockBitstream(_encoder, _outputBuffer));
     }
 
+    auto end = steady_clock::now();
+
+    _logger.log(log_severity::debug, "Encoded in {}us.", duration_cast<microseconds>(end - start).count());
+
     //Return result
     return result;
   }
@@ -175,17 +182,21 @@ namespace Warpr::Encoder
     {
       _logger.log(log_severity::information, "Initializing encoder...");
       NV_ENC_PRESET_CONFIG presetConfig = { NV_ENC_PRESET_CONFIG_VER, 0, { NV_ENC_CONFIG_VER } };
-      check_nvenc(_nvenc.nvEncGetEncodePresetConfigEx(_encoder, NV_ENC_CODEC_HEVC_GUID, NV_ENC_PRESET_P4_GUID, NV_ENC_TUNING_INFO_LOW_LATENCY, &presetConfig));
+      check_nvenc(_nvenc.nvEncGetEncodePresetConfigEx(_encoder, NV_ENC_CODEC_HEVC_GUID, NV_ENC_PRESET_P1_GUID, NV_ENC_TUNING_INFO_ULTRA_LOW_LATENCY, &presetConfig));
 
       NV_ENC_CONFIG encodeConfig = presetConfig.presetCfg;
 
       encodeConfig.rcParams.rateControlMode = NV_ENC_PARAMS_RC_CBR;
+      encodeConfig.rcParams.zeroReorderDelay = 1;
       //encodeConfig.rcParams.averageBitRate = 2500;
       //encodeConfig.rcParams.vbvBufferSize = 0;
       //encodeConfig.rcParams.vbvInitialDelay = 0;
       //encodeConfig.rcParams.maxBitRate = 2500;
-      encodeConfig.gopLength = 120; //Key frame interval
+      //encodeConfig.gopLength = 120; //Key frame interval
+      encodeConfig.rcParams.multiPass = NV_ENC_MULTI_PASS_DISABLED;
 
+      encodeConfig.encodeCodecConfig.hevcConfig.enableIntraRefresh = 1;
+      encodeConfig.encodeCodecConfig.hevcConfig.intraRefreshPeriod = 120;
       encodeConfig.encodeCodecConfig.hevcConfig.inputBitDepth = NV_ENC_BIT_DEPTH_8;
       encodeConfig.encodeCodecConfig.hevcConfig.outputBitDepth = NV_ENC_BIT_DEPTH_8;
       encodeConfig.encodeCodecConfig.hevcConfig.chromaFormatIDC = 1;
@@ -198,7 +209,7 @@ namespace Warpr::Encoder
       NV_ENC_INITIALIZE_PARAMS description{
         .version = NV_ENC_INITIALIZE_PARAMS_VER,
         .encodeGUID = NV_ENC_CODEC_HEVC_GUID,
-        .presetGUID = NV_ENC_PRESET_P4_GUID,
+        .presetGUID = NV_ENC_PRESET_P1_GUID,
         .encodeWidth = _encoderProperties.Width,
         .encodeHeight = _encoderProperties.Height,
         .darWidth = _encoderProperties.Width,
@@ -225,7 +236,7 @@ namespace Warpr::Encoder
         .maxEncodeWidth = _encoderProperties.Width,
         .maxEncodeHeight = _encoderProperties.Height,
         .maxMEHintCountsPerBlock = { 0, 0 },
-        .tuningInfo = NV_ENC_TUNING_INFO_LOW_LATENCY,
+        .tuningInfo = NV_ENC_TUNING_INFO_ULTRA_LOW_LATENCY,
         .bufferFormat = NV_ENC_BUFFER_FORMAT_UNDEFINED,
         .numStateBuffers = 0,
         .outputStatsLevel = NV_ENC_OUTPUT_STATS_NONE,
