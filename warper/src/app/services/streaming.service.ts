@@ -33,6 +33,11 @@ export class StreamingService {
     this._peerConnection = new RTCPeerConnection(config);
     this._peerConnection.onicecandidate = (event) => this.OnIceCandidateAdded(event.candidate?.candidate);
     this._peerConnection.ondatachannel = (event) => this.OnDataChannel(event);
+    this._peerConnection.onconnectionstatechange = (event) => this.OnConnectionStateChanged();
+  }
+
+  private OnConnectionStateChanged() {
+    console.log("WebRTC: " + this._peerConnection.connectionState);
   }
 
   private OnDataChannel(event: RTCDataChannelEvent) {

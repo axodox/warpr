@@ -35,7 +35,7 @@ namespace Warpr::Core
     auto inputFrame = eventArgs;
     _videoPreprocessor->ProcessFrame(inputFrame);
     
-    auto encodedFrame = _videoEncoder->EncodeFrame(inputFrame);
+    auto encodedFrame = _videoEncoder->EncodeFrame(inputFrame, !_isKeyFrameSent);
     if (encodedFrame.Type == FrameType::Key)
     {
       _logger.log(log_severity::information, "Key frame {}.", encodedFrame.Index);

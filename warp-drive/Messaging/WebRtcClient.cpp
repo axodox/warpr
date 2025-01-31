@@ -8,7 +8,6 @@ using namespace std;
 
 namespace Warpr::Messaging
 {
-  const size_t WebRtcClient::_maxMessageSize = 256 * 1024;
   const std::string_view WebRtcClient::_stateNames[] = {
     "New",
     "Connecting",
@@ -18,7 +17,24 @@ namespace Warpr::Messaging
     "Closed"
   };
 
+  const std::string_view WebRtcClient::_iceStateNames[] = {
+    "New",
+    "Checking",
+    "Connected",
+    "Completed",
+    "Failed",
+    "Disconnected",
+    "Closed"
+  };
+
+  const std::string_view WebRtcClient::_gatheringStateNames[] = {
+    "New",
+    "InProgress",
+    "Complete"
+  };
+
   WebRtcClient::WebRtcClient(Axodox::Infrastructure::dependency_container* container) :
+    _containerRef(container->get_ref()),
     _settings(container->resolve<WarpConfiguration>()),
     _signaler(container->resolve<WebSocketClient>()),
     _signalerMessageReceivedSubscription(_signaler->MessageReceived({ this, &WebRtcClient::OnSignalerMessageReceived }))
@@ -51,10 +67,10 @@ namespace Warpr::Messaging
 
     //Split to fragments and send
     {
-      auto messageSize = _maxMessageSize - 16;
+      auto messageSize = _peerConnection->remoteMaxMessageSize() - 16;
 
       memory_stream stream;
-      stream.reserve(_maxMessageSize);
+      stream.reserve(_peerConnection->remoteMaxMessageSize());
 
       size_t position = 0u;
       auto fragmentIndex = 0u;
@@ -71,11 +87,6 @@ namespace Warpr::Messaging
 
         channel->send(reinterpret_cast<const std::byte*>(stream.data()), stream.length());
         position += fragmentLength;
-
-        if (position == bytes.size())
-        {
-          __nop();
-        }
       }
 
       _messageIndex++;
@@ -102,7 +113,7 @@ namespace Warpr::Messaging
     switch (message->Type())
     {
     case WarprMessageType::PairingCompleteMessage:
-      Connect();
+      ConnectAsync();
       break;
 
     case WarprMessageType::PeerConnectionDescriptionMessage:
@@ -128,7 +139,7 @@ namespace Warpr::Messaging
     }
   }
 
-  void WebRtcClient::Connect()
+  winrt::fire_and_forget WebRtcClient::ConnectAsync()
   {
     _logger.log(log_severity::information, "Initializing WebRTC connection...");
 
@@ -163,13 +174,33 @@ namespace Warpr::Messaging
       _logger.log(log_severity::information, "State changed to '{}'.", _stateNames[size_t(state)]);
       });
 
+    _peerConnection->onIceStateChange([=](PeerConnection::IceState state) {
+      _logger.log(log_severity::information, "ICE State changed to '{}'.", _iceStateNames[size_t(state)]);
+      });
+
+    _peerConnection->onGatheringStateChange([=](PeerConnection::GatheringState state) {
+      _logger.log(log_severity::information, "Gathering State changed to '{}'.", _gatheringStateNames[size_t(state)]);
+      });
+
     //Create data channel
     _reliableChannel = _peerConnection->createDataChannel("reliable");
-    _lowLatencyChannel = _peerConnection->createDataChannel("low_latency"/*, {
+    _lowLatencyChannel = _peerConnection->createDataChannel("low_latency", {
       .reliability = {
         .unordered = true,
         .maxRetransmits = 0
       }
-    }*/);
+    });
+
+    auto lifetime = _containerRef.try_lock();
+    co_await 1s;
+
+    if (_peerConnection->state() == PeerConnection::State::Connected) co_return;
+
+    _logger.log(log_severity::warning, "Failed to connect, retrying...");
+    _lowLatencyChannel.reset();
+    _reliableChannel.reset();
+    _peerConnection.reset();
+
+    ConnectAsync();
   }
 }

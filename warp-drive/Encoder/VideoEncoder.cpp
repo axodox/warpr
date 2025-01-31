@@ -69,7 +69,7 @@ namespace Warpr::Encoder
     ReleaseResources();
   }
 
-  EncodedFrame VideoEncoder::EncodeFrame(const Capture::Frame& frame)
+  EncodedFrame VideoEncoder::EncodeFrame(const Capture::Frame& frame, bool forceIdrFrame)
   {
     auto start = steady_clock::now();
 
@@ -107,7 +107,7 @@ namespace Warpr::Encoder
         .inputWidth = _encoderProperties.Width,
         .inputHeight = _encoderProperties.Height,
         .inputPitch = 0,
-        .encodePicFlags = 0,
+        .encodePicFlags = forceIdrFrame ? NV_ENC_PIC_FLAG_FORCEIDR : 0u,
         .frameIdx = _frameIndex++,
         .inputTimeStamp = 0,
         .inputDuration = 0,

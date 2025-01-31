@@ -34,7 +34,7 @@ namespace Warpr::Encoder
     VideoEncoder(Axodox::Infrastructure::dependency_container* container);
     ~VideoEncoder();
 
-    EncodedFrame EncodeFrame(const Capture::Frame& frame);
+    EncodedFrame EncodeFrame(const Capture::Frame& frame, bool forceIdrFrame = false);
 
   private:
     NV_ENCODE_API_FUNCTION_LIST _nvenc;
