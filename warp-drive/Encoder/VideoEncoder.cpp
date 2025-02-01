@@ -194,6 +194,7 @@ namespace Warpr::Encoder
 
       encodeConfig.encodeCodecConfig.hevcConfig.enableIntraRefresh = 1;
       encodeConfig.encodeCodecConfig.hevcConfig.intraRefreshPeriod = 120;
+      encodeConfig.encodeCodecConfig.hevcConfig.intraRefreshCnt = 120;
       encodeConfig.encodeCodecConfig.hevcConfig.inputBitDepth = NV_ENC_BIT_DEPTH_8;
       encodeConfig.encodeCodecConfig.hevcConfig.outputBitDepth = NV_ENC_BIT_DEPTH_8;
       encodeConfig.encodeCodecConfig.hevcConfig.chromaFormatIDC = 1;
