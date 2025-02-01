@@ -60,6 +60,8 @@ namespace Warpr::Core
 
   void WarpSession::SendFrame(const Encoder::EncodedFrame& frame)
   {
+    Stopwatch watch{"Send message"};
+
     memory_stream message;
     message.write(frame.Type);
     message.write(frame.Index);

@@ -28,7 +28,7 @@ export class StreamHostComponent {
   public constructor(streamingService: StreamingService) {
     streamingService.FrameReceived.Subscribe((sender, eventArgs) => this.OnFrameReceived(eventArgs));
 
-    this._decoder = new Worker(new URL('./stream-decoder', import.meta.url));
+    this._decoder = new Worker(new URL('./stream-decoder-worker', import.meta.url));
     this._decoder.onmessage = (event) => this.OnFrameDecoded(event.data as VideoFrame);
   }
 

@@ -7,7 +7,6 @@ using namespace Axodox::Infrastructure;
 using namespace DirectX;
 using namespace Warpr::Graphics;
 using namespace std;
-using namespace std::chrono;
 using namespace winrt;
 
 namespace
@@ -71,7 +70,7 @@ namespace Warpr::Encoder
 
   EncodedFrame VideoEncoder::EncodeFrame(const Capture::Frame& frame, bool forceIdrFrame)
   {
-    auto start = steady_clock::now();
+    Stopwatch watch{ "Frame encode" };
 
     //Ensure session
     auto encoderProperties = GetEncoderProperties(frame);
@@ -151,10 +150,6 @@ namespace Warpr::Encoder
 
       check_nvenc(_nvenc.nvEncUnlockBitstream(_encoder, _outputBuffer));
     }
-
-    auto end = steady_clock::now();
-
-    _logger.log(log_severity::debug, "Encoded in {}us.", duration_cast<microseconds>(end - start).count());
 
     //Return result
     return result;
