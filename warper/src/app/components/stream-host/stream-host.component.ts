@@ -20,8 +20,7 @@ export class StreamHostComponent {
   private _renderingContext?: GPUCanvasContext;
 
   private _decoder: Worker;
-  private _framesPending: VideoFrame[] = [];
-  private _isDecoderInitialized = false;
+  private _framePending?: VideoFrame;
   private _isRendererInitialized = false;
 
 
@@ -93,15 +92,16 @@ export class StreamHostComponent {
   }
 
   private OnFrameDecoded(frame: VideoFrame) {
-    this._framesPending.push(frame);
+    if (this._framePending) this._framePending.close();
+    this._framePending = frame;
   }
 
   private RenderFrame() {
 
-    do {
-      let frame = this._framesPending.shift();
-      if (!frame) break;
+    let frame = this._framePending;
+    this._framePending = undefined;
 
+    if (frame) {
       if (this._isRendererInitialized) {
         let binding = this._device?.createBindGroup({
           layout: this._pipeline!.getBindGroupLayout(0),
@@ -130,7 +130,7 @@ export class StreamHostComponent {
       }
 
       frame.close();
-    } while (this._framesPending.length > 0);
+    }
 
     requestAnimationFrame(() => this.RenderFrame());
   }
