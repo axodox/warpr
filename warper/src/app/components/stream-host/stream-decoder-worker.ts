@@ -1,4 +1,12 @@
-import { EncodedFrame, FrameType } from "../../data/frames";
+export class EncodedVideoFrame {
+  constructor(
+    public Chunk: EncodedVideoChunk,
+    public Width: number,
+    public Height: number) { }
+}
+
+let Width = 0;
+let Height = 0;
 
 let isDecoderInitialized = false;
 let decoder = new VideoDecoder({
@@ -6,18 +14,26 @@ let decoder = new VideoDecoder({
   error: (error) => console.log(error)
 });
 
-decoder.configure({
-  codec: "hvc1.1.6.L93.B0",
-  codedWidth: 1920,
-  codedHeight: 1080,
-  hardwareAcceleration: "prefer-hardware"
-});
-
 self.onmessage = (event) => {
-  let chunk = event.data as EncodedVideoChunk;
-  if (!isDecoderInitialized && chunk.type != "key") return;
+  let frame = event.data as EncodedVideoFrame;
 
+  //Initialize decoder
+  if (frame.Width != Width || frame.Height != Height) {
+    decoder.configure({
+      codec: "hvc1.1.6.L93.B0",
+      codedWidth: frame.Width,
+      codedHeight: frame.Height,
+      hardwareAcceleration: "prefer-hardware",
+      optimizeForLatency: true
+    });
+
+    Width = frame.Width;
+    Height = frame.Height;
+  }
+
+  //Decode frame
+  if (!isDecoderInitialized && frame.Chunk.type != "key") return;
   isDecoderInitialized = true;
 
-  decoder.decode(chunk);
+  decoder.decode(frame.Chunk);
 };

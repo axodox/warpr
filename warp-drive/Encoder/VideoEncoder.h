@@ -16,6 +16,8 @@ namespace Warpr::Encoder
   {
     uint32_t Index = 0;
     FrameType Type = FrameType::Unknown;
+    uint32_t Width = 0;
+    uint32_t Height = 0;
     std::vector<uint8_t> Bytes;
     std::vector<uint32_t> Slices;
   };

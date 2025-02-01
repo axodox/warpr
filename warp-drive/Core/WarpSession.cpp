@@ -65,6 +65,8 @@ namespace Warpr::Core
     memory_stream message;
     message.write(frame.Type);
     message.write(frame.Index);
+    message.write(frame.Width);
+    message.write(frame.Height);
     message.write(frame.Bytes);
     _webRtcClient->SendMessage(message, WebRtcChannel::LowLatency);
   }

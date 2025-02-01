@@ -147,6 +147,8 @@ namespace Warpr::Encoder
       result.Slices.resize(description.numSlices);
       result.Index = description.frameIdx;
       result.Type = description.pictureType == NV_ENC_PIC_TYPE_IDR ? FrameType::Key : FrameType::Delta;
+      result.Width = _encoderProperties.Width;
+      result.Height = _encoderProperties.Height;
 
       check_nvenc(_nvenc.nvEncUnlockBitstream(_encoder, _outputBuffer));
     }

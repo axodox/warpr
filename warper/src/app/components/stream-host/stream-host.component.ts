@@ -3,6 +3,7 @@ import VertexShaderSource from "./vertex-shader.wgsl";
 import PixelShaderSource from "./pixel-shader.wgsl";
 import { StreamingService } from '../../services/streaming.service';
 import { EncodedFrame, FrameType } from '../../data/frames';
+import { EncodedVideoFrame } from './stream-decoder-worker';
 
 @Component({
   selector: 'app-stream-host',
@@ -32,8 +33,6 @@ export class StreamHostComponent {
   }
 
   private async ngAfterViewInit() {
-    this._canvas!.nativeElement.width = 1920;
-    this._canvas!.nativeElement.height = 1080;
 
     console.log("Initializing stream host...");
     this._adapter = await navigator.gpu.requestAdapter() ?? undefined;
@@ -88,7 +87,8 @@ export class StreamHostComponent {
       timestamp: frame.Index
     });
 
-    this._decoder.postMessage(chunk);
+    let message = new EncodedVideoFrame(chunk, frame.Width, frame.Height);
+    this._decoder.postMessage(message);
   }
 
   private OnFrameDecoded(frame: VideoFrame) {
@@ -102,6 +102,10 @@ export class StreamHostComponent {
     this._framePending = undefined;
 
     if (frame) {
+
+      this._canvas!.nativeElement.width = frame.displayWidth;
+      this._canvas!.nativeElement.height = frame.displayHeight;
+
       if (this._isRendererInitialized) {
         let binding = this._device?.createBindGroup({
           layout: this._pipeline!.getBindGroupLayout(0),
