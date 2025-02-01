@@ -52,7 +52,7 @@ namespace Warpr::Capture
       DirectXPixelFormat::R8G8B8A8UIntNormalized,
       2,
       _captureItem.Size());
-
+    
     //Attach frame arrived event handler
     _framePool.FrameArrived([=](auto&&...) {
       while (true)

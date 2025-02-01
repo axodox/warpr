@@ -188,7 +188,7 @@ namespace Warpr::Encoder
 
       encodeConfig.rcParams.rateControlMode = NV_ENC_PARAMS_RC_CBR;
       encodeConfig.rcParams.zeroReorderDelay = 1;
-      encodeConfig.rcParams.averageBitRate = 6400000*4;
+      encodeConfig.rcParams.averageBitRate = 6400000*2;
       //encodeConfig.rcParams.vbvBufferSize = 0;
       //encodeConfig.rcParams.vbvInitialDelay = 0;
       //encodeConfig.rcParams.maxBitRate = 2500;
