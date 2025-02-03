@@ -18,3 +18,5 @@ import { StreamHostComponent } from './components/stream-host/stream-host.compon
   bootstrap: [AppComponent]
 })
 export class AppModule { }
+
+console.log("Isolation: " + crossOriginIsolated);

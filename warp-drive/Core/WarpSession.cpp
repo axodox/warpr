@@ -7,6 +7,7 @@ using namespace Warpr::Capture;
 using namespace Warpr::Encoder;
 using namespace Warpr::Messaging;
 using namespace std;
+using namespace std::chrono;
 
 namespace Warpr::Core
 {
@@ -23,7 +24,7 @@ namespace Warpr::Core
     lock_guard lock(_mutex);
 
     static uint32_t counter = 0;
-    //if (counter++ % 2 != 0) return;
+    if (counter++ % 2 != 0) return;
 
     if (!_webRtcClient->IsConnected())
     {
@@ -34,7 +35,7 @@ namespace Warpr::Core
     auto inputFrame = eventArgs;
     _videoPreprocessor->ProcessFrame(inputFrame);
     
-    auto encodedFrame = _videoEncoder->EncodeFrame(inputFrame);
+    auto encodedFrame = _videoEncoder->EncodeFrame(inputFrame, !_isKeyFrameSent);
     if (encodedFrame.Type == FrameType::Key)
     {
       _logger.log(log_severity::information, "Key frame {}.", encodedFrame.Index);
@@ -45,13 +46,27 @@ namespace Warpr::Core
       _isKeyFrameSent = true;
       SendFrame(encodedFrame);
     }
+
+    _frameCount++;
+    auto now = steady_clock::now();
+    if (now - _lastStateTime > 1s)
+    {
+      auto fps = _frameCount / duration_cast<duration<float>>(now - _lastStateTime).count();
+      _logger.log(log_severity::debug, "Output: {:.1f} fps", fps);
+      _lastStateTime = now;
+      _frameCount = 0;
+    }
   }
 
   void WarpSession::SendFrame(const Encoder::EncodedFrame& frame)
   {
+    Stopwatch watch{"Send message"};
+
     memory_stream message;
     message.write(frame.Type);
     message.write(frame.Index);
+    message.write(frame.Width);
+    message.write(frame.Height);
     message.write(frame.Bytes);
     _webRtcClient->SendMessage(message, WebRtcChannel::LowLatency);
   }

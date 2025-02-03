@@ -7,7 +7,6 @@ using namespace Axodox::Infrastructure;
 using namespace DirectX;
 using namespace Warpr::Graphics;
 using namespace std;
-using namespace std::chrono;
 using namespace winrt;
 
 namespace
@@ -69,9 +68,9 @@ namespace Warpr::Encoder
     ReleaseResources();
   }
 
-  EncodedFrame VideoEncoder::EncodeFrame(const Capture::Frame& frame)
+  EncodedFrame VideoEncoder::EncodeFrame(const Capture::Frame& frame, bool forceIdrFrame)
   {
-    auto start = steady_clock::now();
+    Stopwatch watch{ "Frame encode" };
 
     //Ensure session
     auto encoderProperties = GetEncoderProperties(frame);
@@ -107,7 +106,7 @@ namespace Warpr::Encoder
         .inputWidth = _encoderProperties.Width,
         .inputHeight = _encoderProperties.Height,
         .inputPitch = 0,
-        .encodePicFlags = 0,
+        .encodePicFlags = forceIdrFrame ? NV_ENC_PIC_FLAG_FORCEIDR : 0u,
         .frameIdx = _frameIndex++,
         .inputTimeStamp = 0,
         .inputDuration = 0,
@@ -148,13 +147,11 @@ namespace Warpr::Encoder
       result.Slices.resize(description.numSlices);
       result.Index = description.frameIdx;
       result.Type = description.pictureType == NV_ENC_PIC_TYPE_IDR ? FrameType::Key : FrameType::Delta;
+      result.Width = _encoderProperties.Width;
+      result.Height = _encoderProperties.Height;
 
       check_nvenc(_nvenc.nvEncUnlockBitstream(_encoder, _outputBuffer));
     }
-
-    auto end = steady_clock::now();
-
-    _logger.log(log_severity::debug, "Encoded in {}us.", duration_cast<microseconds>(end - start).count());
 
     //Return result
     return result;
@@ -188,7 +185,7 @@ namespace Warpr::Encoder
 
       encodeConfig.rcParams.rateControlMode = NV_ENC_PARAMS_RC_CBR;
       encodeConfig.rcParams.zeroReorderDelay = 1;
-      //encodeConfig.rcParams.averageBitRate = 2500;
+      encodeConfig.rcParams.averageBitRate = 6400000*2;
       //encodeConfig.rcParams.vbvBufferSize = 0;
       //encodeConfig.rcParams.vbvInitialDelay = 0;
       //encodeConfig.rcParams.maxBitRate = 2500;
@@ -197,6 +194,7 @@ namespace Warpr::Encoder
 
       encodeConfig.encodeCodecConfig.hevcConfig.enableIntraRefresh = 1;
       encodeConfig.encodeCodecConfig.hevcConfig.intraRefreshPeriod = 120;
+      encodeConfig.encodeCodecConfig.hevcConfig.intraRefreshCnt = 120;
       encodeConfig.encodeCodecConfig.hevcConfig.inputBitDepth = NV_ENC_BIT_DEPTH_8;
       encodeConfig.encodeCodecConfig.hevcConfig.outputBitDepth = NV_ENC_BIT_DEPTH_8;
       encodeConfig.encodeCodecConfig.hevcConfig.chromaFormatIDC = 1;

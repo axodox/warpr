@@ -22,6 +22,8 @@ namespace Warpr::Core
     std::shared_ptr<Encoder::VideoEncoder> _videoEncoder;
     std::shared_ptr<Messaging::WebRtcClient> _webRtcClient;
     bool _isKeyFrameSent = false;
+    std::chrono::steady_clock::time_point _lastStateTime = {};
+    uint32_t _frameCount = 0;
 
     Axodox::Infrastructure::event_subscription _frameArrivedSubscription;
 

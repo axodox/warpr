@@ -3,6 +3,7 @@ import VertexShaderSource from "./vertex-shader.wgsl";
 import PixelShaderSource from "./pixel-shader.wgsl";
 import { StreamingService } from '../../services/streaming.service';
 import { EncodedFrame, FrameType } from '../../data/frames';
+import { EncodedVideoFrame } from './stream-decoder-worker';
 
 @Component({
   selector: 'app-stream-host',
@@ -19,31 +20,19 @@ export class StreamHostComponent {
   private _sampler?: GPUSampler;
   private _renderingContext?: GPUCanvasContext;
 
-  private _decoder: VideoDecoder;
+  private _decoder: Worker;
   private _framePending?: VideoFrame;
-  private _isDecoderInitialized = false;
   private _isRendererInitialized = false;
 
 
   public constructor(streamingService: StreamingService) {
     streamingService.FrameReceived.Subscribe((sender, eventArgs) => this.OnFrameReceived(eventArgs));
 
-    this._decoder = new VideoDecoder({
-      output: (frame) => this.OnFrameDecoded(frame),
-      error: (error) => this.OnFrameDecodeFailed(error)
-    });
-
-    this._decoder.configure({
-      codec: "hvc1.1.6.L93.B0",
-      codedWidth: 3840,
-      codedHeight: 2160,
-      hardwareAcceleration: "prefer-hardware"
-    });
+    this._decoder = new Worker(new URL('./stream-decoder-worker', import.meta.url));
+    this._decoder.onmessage = (event) => this.OnFrameDecoded(event.data as VideoFrame);
   }
 
   private async ngAfterViewInit() {
-    this._canvas!.nativeElement.width = 3840;
-    this._canvas!.nativeElement.height = 2160;
 
     console.log("Initializing stream host...");
     this._adapter = await navigator.gpu.requestAdapter() ?? undefined;
@@ -87,68 +76,66 @@ export class StreamHostComponent {
 
     console.log("Stream host initialized.");
     this._isRendererInitialized = true;
+
+    requestAnimationFrame(() => this.RenderFrame());
   }
 
   private OnFrameReceived(frame: EncodedFrame) {
-    if (this._decoder.state != "configured") return;
-    if (!this._isDecoderInitialized && frame.Type != FrameType.Key) return;
-
-    this._isDecoderInitialized = true;
-
     let chunk = new EncodedVideoChunk({
       data: frame.Bytes,
       type: frame.Type == FrameType.Key ? "key" : "delta",
       timestamp: frame.Index
     });
-    this._decoder.decode(chunk);
+
+    let message = new EncodedVideoFrame(chunk, frame.Width, frame.Height);
+    this._decoder.postMessage(message);
   }
 
   private OnFrameDecoded(frame: VideoFrame) {
-    if (this._framePending) {
-      this._framePending.close();
-      this._framePending = frame;
-    } else {
-      this._framePending = frame;
-      requestAnimationFrame(() => this.RenderFrame());
-    }
+    if (this._framePending) this._framePending.close();
+    this._framePending = frame;
   }
 
   private RenderFrame() {
+
     let frame = this._framePending;
     this._framePending = undefined;
-    if (!frame) return; 
 
-    if (this._isRendererInitialized) {
-      let binding = this._device?.createBindGroup({
-        layout: this._pipeline!.getBindGroupLayout(0),
-        entries: [
-          { binding: 1, resource: this._sampler! },
-          { binding: 2, resource: this._device.importExternalTexture({ source: frame }) }
-        ]
-      });
+    if (frame) {
 
-      let commandEncoder = this._device!.createCommandEncoder();
-      let textureView = this._renderingContext!.getCurrentTexture().createView();
-      let passEncoder = commandEncoder.beginRenderPass({
-        colorAttachments: [{
-          view: textureView,
-          clearValue: [1.0, 0.0, 0.0, 1.0],
-          loadOp: "clear",
-          storeOp: "store"
-        }]
-      });
+      this._canvas!.nativeElement.width = frame.displayWidth;
+      this._canvas!.nativeElement.height = frame.displayHeight;
 
-      passEncoder.setPipeline(this._pipeline!);
-      passEncoder.setBindGroup(0, binding!);
-      passEncoder.draw(6, 1, 0, 0);
-      passEncoder.end();
-      this._device?.queue.submit([commandEncoder.finish()]);
+      if (this._isRendererInitialized) {
+        let binding = this._device?.createBindGroup({
+          layout: this._pipeline!.getBindGroupLayout(0),
+          entries: [
+            { binding: 1, resource: this._sampler! },
+            { binding: 2, resource: this._device.importExternalTexture({ source: frame }) }
+          ]
+        });
+
+        let commandEncoder = this._device!.createCommandEncoder();
+        let textureView = this._renderingContext!.getCurrentTexture().createView();
+        let passEncoder = commandEncoder.beginRenderPass({
+          colorAttachments: [{
+            view: textureView,
+            clearValue: [1.0, 0.0, 0.0, 1.0],
+            loadOp: "clear",
+            storeOp: "store"
+          }]
+        });
+
+        passEncoder.setPipeline(this._pipeline!);
+        passEncoder.setBindGroup(0, binding!);
+        passEncoder.draw(6, 1, 0, 0);
+        passEncoder.end();
+        this._device?.queue.submit([commandEncoder.finish()]);
+      }
+
+      frame.close();
     }
 
-    frame.close();
-  }
-
-  private OnFrameDecodeFailed(error: Error) {
-    throw error.message;
+    requestAnimationFrame(() => this.RenderFrame());
   }
 }

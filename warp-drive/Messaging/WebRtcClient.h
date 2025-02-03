@@ -22,8 +22,10 @@ namespace Warpr::Messaging
     void SendMessage(std::span<const uint8_t> bytes, WebRtcChannel channelType);
 
   private:
-    static const size_t _maxMessageSize;
     static const std::string_view _stateNames[];
+    static const std::string_view _iceStateNames[];
+    static const std::string_view _gatheringStateNames[];
+    Axodox::Infrastructure::dependency_container_ref _containerRef;
 
     uint32_t _messageIndex = 0;
 
@@ -38,6 +40,6 @@ namespace Warpr::Messaging
     Axodox::Infrastructure::event_subscription _signalerMessageReceivedSubscription;
 
     void OnSignalerMessageReceived(WebSocketClient* sender, const WarprMessage* message);
-    void Connect();
+    winrt::fire_and_forget ConnectAsync();
   };
 }
