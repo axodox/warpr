@@ -4,7 +4,7 @@ import { PeerConnectionCandidateMessage, PeerConnectionDescriptionMessage, Warpr
 import { IMessagingClient } from '../networking/messaging-client';
 import { EncodedFrame, FrameType } from '../data/frames';
 import { EventOwner, EventPublisher } from '../insfrastructure/events';
-import { MessageAssembler } from '../insfrastructure/message_assembler';
+import { MessageAssembler } from '../insfrastructure/message-assembler';
 
 @Injectable({
   providedIn: 'root'
