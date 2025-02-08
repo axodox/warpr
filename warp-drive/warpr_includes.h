@@ -8,6 +8,8 @@
 #include "Include/Axodox.Storage.h"
 
 #include "rtc/rtc.hpp"
+#include "dxgi1_6.h"
 
 #undef SendMessage
 #pragma comment(lib, "d3d11.lib")
+#pragma comment(lib, "dxgi.lib")

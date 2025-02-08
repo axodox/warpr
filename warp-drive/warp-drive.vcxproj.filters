@@ -63,6 +63,9 @@
     <ClCompile Include="Core\WarpSession.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Capture\DesktopDuplicationSource.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="vcpkg.json" />
@@ -113,6 +116,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Core\WarpSession.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Capture\DesktopDuplicationSource.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

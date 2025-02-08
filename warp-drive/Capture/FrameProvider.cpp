@@ -1,9 +1,11 @@
 #include "warpr_includes.h"
 #include "FrameProvider.h"
 #include "Core/WarpConfiguration.h"
+#include "DesktopDuplicationSource.h"
 
 using namespace Axodox::Infrastructure;
 using namespace Warpr;
+using namespace std;
 
 namespace Warpr::Capture
 {
@@ -14,6 +16,7 @@ namespace Warpr::Capture
 
     auto configuration = container->resolve<WarpConfiguration>();
     _source = FrameSource::Create(container, configuration->FrameSource.get());
+    //_source = make_unique<DesktopDuplicationSource>(container);
     if (_source)
     {
       _source->FrameArrived(no_revoke, { this, &FrameProvider::OnFrameArrived });

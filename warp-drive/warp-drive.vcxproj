@@ -108,6 +108,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Capture\DesktopDuplicationSource.cpp" />
     <ClCompile Include="Capture\FrameProvider.cpp" />
     <ClCompile Include="Core\WarpSession.cpp" />
     <ClCompile Include="Encoder\VideoEncoder.cpp" />
@@ -133,6 +134,7 @@
     <None Include="vcpkg.json" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Capture\DesktopDuplicationSource.h" />
     <ClInclude Include="Capture\FrameProvider.h" />
     <ClInclude Include="Core\WarpSession.h" />
     <ClInclude Include="Encoder\VideoEncoder.h" />
