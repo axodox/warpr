@@ -1,9 +1,6 @@
 import { Component, ElementRef, ViewChild } from '@angular/core';
-import VertexShaderSource from "./vertex-shader.wgsl";
-import PixelShaderSource from "./pixel-shader.wgsl";
 import { StreamingService } from '../../services/streaming.service';
 import { EncodedFrame, FrameType } from '../../data/frames';
-import { EncodedVideoFrame } from './stream-decoder-worker';
 
 @Component({
   selector: 'app-stream-host',
@@ -16,15 +13,19 @@ export class StreamHostComponent {
   private _canvas?: ElementRef<HTMLCanvasElement>;
   private _renderingContext: CanvasRenderingContext2D | null = null;
 
-  private _decoder: Worker;
+  private _decoder: VideoDecoder;
   private _framePending?: VideoFrame;
-
+  private _width = 0;
+  private _height = 0;
+  private _isDecoderInitialized = false;
 
   public constructor(streamingService: StreamingService) {
     streamingService.FrameReceived.Subscribe((sender, eventArgs) => this.OnFrameReceived(eventArgs));
 
-    this._decoder = new Worker(new URL('./stream-decoder-worker', import.meta.url));
-    this._decoder.onmessage = (event) => this.OnFrameDecoded(event.data as VideoFrame);
+    this._decoder = new VideoDecoder({
+      output: (frame) => this.OnFrameDecoded(frame),
+      error: (error) => console.log(error)
+    });
   }
 
   private async ngAfterViewInit() {
@@ -49,13 +50,33 @@ export class StreamHostComponent {
       timestamp: frame.Index
     });
 
-    let message = new EncodedVideoFrame(chunk, frame.Width, frame.Height);
-    this._decoder.postMessage(message);
+    //Initialize decoder
+    if (frame.Width != this._width || frame.Height != this._height) {
+      console.log("Configuring decoder...");
+      this._decoder.configure({
+        codec: "hvc1.1.6.L93.B0",
+        codedWidth: frame.Width,
+        codedHeight: frame.Height,
+        hardwareAcceleration: "prefer-hardware",
+        optimizeForLatency: true
+      });
+      console.log("Decoder configured.");
+
+      this._width = frame.Width;
+      this._height = frame.Height;
+    }
+
+    //Decode frame
+    if (!this._isDecoderInitialized && chunk.type != "key") return;
+    this._isDecoderInitialized = true;
+
+    this._decoder.decode(chunk);
   }
 
   private OnFrameDecoded(frame: VideoFrame) {
     if (this._framePending) this._framePending.close();
     this._framePending = frame;
+    requestAnimationFrame(() => this.RenderFrame());
   }
 
   private RenderFrame() {
@@ -75,6 +96,5 @@ export class StreamHostComponent {
       frame.close();
     }
 
-    requestAnimationFrame(() => this.RenderFrame());
   }
 }

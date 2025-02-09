@@ -150,6 +150,8 @@ namespace Warpr::Messaging
     {
       config.iceServers.emplace_back(server);
     }
+    config.maxMessageSize = 256 * 1024;
+    config.mtu = 1500;
 
     //Create peer connection
     _peerConnection = make_unique<PeerConnection>(config);

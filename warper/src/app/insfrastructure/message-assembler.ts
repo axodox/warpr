@@ -11,7 +11,7 @@ class MessageBuilder {
     public readonly FragmentSize: number
   ) {
     this.FragmentCount = Math.ceil(Size / FragmentSize);
-    this.Buffer = new Uint8Array(new SharedArrayBuffer(Size));
+    this.Buffer = new Uint8Array(Size);
   }
 
   AddFragment(index: number, buffer: Uint8Array): boolean {

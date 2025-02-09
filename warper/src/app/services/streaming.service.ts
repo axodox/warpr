@@ -47,6 +47,7 @@ export class StreamingService {
         break;
       case "low_latency":
         this._lowLatencyConnection = event.channel;
+        this._lowLatencyConnection.binaryType = "arraybuffer"
         this._lowLatencyConnection.onmessage = (event) => this.OnLowLatencyMessage(event);
         break;
     }

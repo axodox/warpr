@@ -74,7 +74,7 @@ namespace Warpr::Capture
     _logger.log(log_severity::information, "Starting capture session...");
     _session = _framePool.CreateCaptureSession(_captureItem);
     _session.IsBorderRequired(false);
-    _session.IsCursorCaptureEnabled(false);
+    _session.IsCursorCaptureEnabled(true);
     _session.StartCapture();
     _logger.log(log_severity::information, "Capture started.");
   }
