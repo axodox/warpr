@@ -68,7 +68,7 @@ namespace Warpr::Capture
 
         frame.Close();
       }
-      });
+    });
 
     //Start capture session
     _logger.log(log_severity::information, "Starting capture session...");

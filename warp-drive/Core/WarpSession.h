@@ -17,12 +17,14 @@ namespace Warpr::Core
   private:
     std::mutex _mutex;
 
+    std::shared_ptr<WarpConfiguration> _configuration;
     std::shared_ptr<Capture::FrameProvider> _frameProvider;
     std::shared_ptr<Encoder::VideoPreprocessor> _videoPreprocessor;
     std::shared_ptr<Encoder::VideoEncoder> _videoEncoder;
     std::shared_ptr<Messaging::WebRtcClient> _webRtcClient;
+
     bool _isKeyFrameSent = false;
-    std::chrono::steady_clock::time_point _lastStateTime = {};
+    std::chrono::steady_clock::time_point _lastStateTime = {}, _lastFrameTime = {};
     uint32_t _frameCount = 0;
 
     Axodox::Infrastructure::event_subscription _frameArrivedSubscription;

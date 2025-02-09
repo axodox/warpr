@@ -12,6 +12,7 @@ using namespace std::chrono;
 namespace Warpr::Core
 {
   WarpSession::WarpSession(Axodox::Infrastructure::dependency_container* container) :
+    _configuration(container->resolve<WarpConfiguration>()),
     _frameProvider(container->resolve<FrameProvider>()),
     _videoPreprocessor(container->resolve<VideoPreprocessor>()),
     _videoEncoder(container->resolve<VideoEncoder>()),
@@ -24,9 +25,8 @@ namespace Warpr::Core
     lock_guard lock(_mutex);
 
     auto now = steady_clock::now();
-    static steady_clock::time_point lastFrame = now;
-    if (now - lastFrame < 16ms) return;
-    lastFrame = now;
+    if (now - _lastFrameTime < _configuration->MinimumFrameInterval) return;
+    _lastFrameTime = now;
 
     if (!_webRtcClient->IsConnected())
     {

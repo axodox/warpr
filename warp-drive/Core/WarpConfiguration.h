@@ -12,5 +12,7 @@ namespace Warpr
 		std::vector<std::string> IceServers = { "stun:stun.l.google.com:19302" };
 
 		std::shared_ptr<Capture::FrameSourceDescription> FrameSource;
+
+		std::chrono::milliseconds MinimumFrameInterval = std::chrono::milliseconds{ 12 };
 	};
 }
