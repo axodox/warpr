@@ -4,7 +4,7 @@ import { PeerConnectionCandidateMessage, PeerConnectionDescriptionMessage, Warpr
 import { IMessagingClient } from '../networking/messaging-client';
 import { EncodedFrame, FrameType } from '../data/frames';
 import { EventOwner, EventPublisher } from '../insfrastructure/events';
-import { MessageAssembler } from '../insfrastructure/message_assembler';
+import { MessageAssembler } from '../insfrastructure/message-assembler';
 
 @Injectable({
   providedIn: 'root'
@@ -47,13 +47,13 @@ export class StreamingService {
         break;
       case "low_latency":
         this._lowLatencyConnection = event.channel;
+        this._lowLatencyConnection.binaryType = "arraybuffer"
         this._lowLatencyConnection.onmessage = (event) => this.OnLowLatencyMessage(event);
         break;
     }
   }
 
   private _lastRefreshTime = performance.now();
-  private _sum = 0;
   private _count = 0;
 
   private OnLowLatencyMessage(event: MessageEvent<any>) {
@@ -62,11 +62,15 @@ export class StreamingService {
     if (!message) return;
 
     let now = performance.now();
-    this._sum += now - this._lastRefreshTime;
+    let elapsed = now - this._lastRefreshTime;
     this._count++;
-    this._lastRefreshTime = now;
 
-    if (this._count % 120 == 0) console.log(`Message decoded ${this._sum / this._count}ms`);
+    if (elapsed > 1000) {
+      this._lastRefreshTime = now;
+
+      console.log(`Messages: ${this._count / elapsed * 1000} FPS`);
+      this._count = 0;
+    }
 
     let frame = new EncodedFrame(message);
     this._events.Raise(this.FrameReceived, this, frame);

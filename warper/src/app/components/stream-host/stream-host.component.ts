@@ -1,9 +1,6 @@
 import { Component, ElementRef, ViewChild } from '@angular/core';
-import VertexShaderSource from "./vertex-shader.wgsl";
-import PixelShaderSource from "./pixel-shader.wgsl";
 import { StreamingService } from '../../services/streaming.service';
 import { EncodedFrame, FrameType } from '../../data/frames';
-import { EncodedVideoFrame } from './stream-decoder-worker';
 
 @Component({
   selector: 'app-stream-host',
@@ -14,68 +11,34 @@ export class StreamHostComponent {
 
   @ViewChild("renderTarget")
   private _canvas?: ElementRef<HTMLCanvasElement>;
-  private _adapter?: GPUAdapter;
-  private _device?: GPUDevice;
-  private _pipeline?: GPURenderPipeline;
-  private _sampler?: GPUSampler;
-  private _renderingContext?: GPUCanvasContext;
+  private _renderingContext: CanvasRenderingContext2D | null = null;
 
-  private _decoder: Worker;
+  private _decoder: VideoDecoder;
   private _framePending?: VideoFrame;
-  private _isRendererInitialized = false;
-
+  private _width = 0;
+  private _height = 0;
+  private _isDecoderInitialized = false;
 
   public constructor(streamingService: StreamingService) {
     streamingService.FrameReceived.Subscribe((sender, eventArgs) => this.OnFrameReceived(eventArgs));
 
-    this._decoder = new Worker(new URL('./stream-decoder-worker', import.meta.url));
-    this._decoder.onmessage = (event) => this.OnFrameDecoded(event.data as VideoFrame);
+    this._decoder = new VideoDecoder({
+      output: (frame) => this.OnFrameDecoded(frame),
+      error: (error) => console.log(error)
+    });
   }
 
   private async ngAfterViewInit() {
 
     console.log("Initializing stream host...");
-    this._adapter = await navigator.gpu.requestAdapter() ?? undefined;
-    if (!this._adapter) {
-      console.log("Cannot access GPU adapter.");
-      return;
+    this._renderingContext = this._canvas?.nativeElement.getContext("2d")!;
+
+    if (this._renderingContext) {
+      console.log("Stream host initialized.");
     }
-
-    this._device = await this._adapter.requestDevice();
-    if (!this._device) {
-      console.log("Cannot access GPU device.");
-      return;
+    else {
+      console.log("Stream host failed to initialize.");
     }
-
-    let format = navigator.gpu.getPreferredCanvasFormat();
-    this._renderingContext = this._canvas?.nativeElement.getContext("webgpu")!;
-
-    this._renderingContext.configure({
-      device: this._device,
-      format: format,
-      alphaMode: "opaque"
-    });
-
-    this._pipeline = this._device.createRenderPipeline({
-      layout: "auto",
-      vertex: {
-        module: this._device.createShaderModule({ code: VertexShaderSource }),
-        entryPoint: "vert_main"
-      },
-      fragment: {
-        module: this._device.createShaderModule({ code: PixelShaderSource }),
-        entryPoint: "frag_main",
-        targets: [{ format: format }]
-      },
-      primitive: {
-        topology: "triangle-list"
-      }
-    });
-
-    this._sampler = this._device.createSampler({});
-
-    console.log("Stream host initialized.");
-    this._isRendererInitialized = true;
 
     requestAnimationFrame(() => this.RenderFrame());
   }
@@ -87,13 +50,33 @@ export class StreamHostComponent {
       timestamp: frame.Index
     });
 
-    let message = new EncodedVideoFrame(chunk, frame.Width, frame.Height);
-    this._decoder.postMessage(message);
+    //Initialize decoder
+    if (frame.Width != this._width || frame.Height != this._height) {
+      console.log("Configuring decoder...");
+      this._decoder.configure({
+        codec: "hvc1.1.6.L93.B0",
+        codedWidth: frame.Width,
+        codedHeight: frame.Height,
+        hardwareAcceleration: "prefer-hardware",
+        optimizeForLatency: true
+      });
+      console.log("Decoder configured.");
+
+      this._width = frame.Width;
+      this._height = frame.Height;
+    }
+
+    //Decode frame
+    if (!this._isDecoderInitialized && chunk.type != "key") return;
+    this._isDecoderInitialized = true;
+
+    this._decoder.decode(chunk);
   }
 
   private OnFrameDecoded(frame: VideoFrame) {
     if (this._framePending) this._framePending.close();
     this._framePending = frame;
+    requestAnimationFrame(() => this.RenderFrame());
   }
 
   private RenderFrame() {
@@ -106,36 +89,12 @@ export class StreamHostComponent {
       this._canvas!.nativeElement.width = frame.displayWidth;
       this._canvas!.nativeElement.height = frame.displayHeight;
 
-      if (this._isRendererInitialized) {
-        let binding = this._device?.createBindGroup({
-          layout: this._pipeline!.getBindGroupLayout(0),
-          entries: [
-            { binding: 1, resource: this._sampler! },
-            { binding: 2, resource: this._device.importExternalTexture({ source: frame }) }
-          ]
-        });
-
-        let commandEncoder = this._device!.createCommandEncoder();
-        let textureView = this._renderingContext!.getCurrentTexture().createView();
-        let passEncoder = commandEncoder.beginRenderPass({
-          colorAttachments: [{
-            view: textureView,
-            clearValue: [1.0, 0.0, 0.0, 1.0],
-            loadOp: "clear",
-            storeOp: "store"
-          }]
-        });
-
-        passEncoder.setPipeline(this._pipeline!);
-        passEncoder.setBindGroup(0, binding!);
-        passEncoder.draw(6, 1, 0, 0);
-        passEncoder.end();
-        this._device?.queue.submit([commandEncoder.finish()]);
+      if (this._renderingContext) {
+        this._renderingContext.drawImage(frame, 0, 0, frame.displayWidth, frame.displayHeight);
       }
 
       frame.close();
     }
 
-    requestAnimationFrame(() => this.RenderFrame());
   }
 }

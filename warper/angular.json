@@ -82,7 +82,10 @@
             "headers": {
               "Cross-Origin-Opener-Policy": "same-origin",
               "Cross-Origin-Embedder-Policy": "require-corp"
-            }
+            },
+            "ssl": true,
+            "sslKey": "../wormhole/axodox-pc.key",
+            "sslCert": "../wormhole/axodox-pc.pem"
           }
         },
         "extract-i18n": {

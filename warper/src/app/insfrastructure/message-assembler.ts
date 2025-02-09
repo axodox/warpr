@@ -11,7 +11,7 @@ class MessageBuilder {
     public readonly FragmentSize: number
   ) {
     this.FragmentCount = Math.ceil(Size / FragmentSize);
-    this.Buffer = new Uint8Array(new SharedArrayBuffer(Size));
+    this.Buffer = new Uint8Array(Size);
   }
 
   AddFragment(index: number, buffer: Uint8Array): boolean {
@@ -26,7 +26,7 @@ class MessageBuilder {
 
 export class MessageAssembler {
 
-  private _builders: MessageBuilder[] = [];
+  private _builders = new Map<number, MessageBuilder>();
 
   public constructor(private _maxBuilderCount = 3) { }
 
@@ -38,17 +38,20 @@ export class MessageAssembler {
     let fragmentIndex = stream.ReadUInt32();
     let fragment = new Uint8Array(stream.ReadToEnd());
 
-    let builder = this._builders.find((value) => value.Id == messageIndex);
+    let builder = this._builders.get(messageIndex);
     if (builder === undefined) {
       builder = new MessageBuilder(messageIndex, messageSize, fragmentSize);
-      this._builders.push(builder);
+      this._builders.set(messageIndex, builder);
 
-      if (this._builders.length > this._maxBuilderCount) {
-        this._builders.splice(0, this._builders.length - this._maxBuilderCount);
+      if (this._builders.size > this._maxBuilderCount) {
+        let [oldest] = this._builders.keys();
+        this._builders.delete(oldest);
+        console.log("Message lost.");
       }
     }
 
     if (builder.AddFragment(fragmentIndex, fragment)) {
+      this._builders.delete(messageIndex);
       return builder.Buffer.buffer;
     } else {
       return null;
