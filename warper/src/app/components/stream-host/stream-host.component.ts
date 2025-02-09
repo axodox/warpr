@@ -1,6 +1,7 @@
 import { Component, ElementRef, ViewChild } from '@angular/core';
 import { StreamingService } from '../../services/streaming.service';
 import { EncodedFrame, FrameType } from '../../data/frames';
+import { Point, PointerAction, PointerInputMessage, PointerType } from '../../data/input-messages';
 
 @Component({
   selector: 'app-stream-host',
@@ -19,8 +20,9 @@ export class StreamHostComponent {
   private _height = 0;
   private _isDecoderInitialized = false;
 
-  public constructor(streamingService: StreamingService) {
-    streamingService.FrameReceived.Subscribe((sender, eventArgs) => this.OnFrameReceived(eventArgs));
+  public constructor(
+    private _streamingService: StreamingService) {
+    this._streamingService.FrameReceived.Subscribe((sender, eventArgs) => this.OnFrameReceived(eventArgs));
 
     this._decoder = new VideoDecoder({
       output: (frame) => this.OnFrameDecoded(frame),
@@ -31,7 +33,10 @@ export class StreamHostComponent {
   private async ngAfterViewInit() {
 
     console.log("Initializing stream host...");
-    this._renderingContext = this._canvas?.nativeElement.getContext("2d")!;
+    this._renderingContext = this._canvas!.nativeElement.getContext("2d")!;
+    this._canvas!.nativeElement.onpointerdown = (event) => this.OnPointerEvent(event);
+    this._canvas!.nativeElement.onpointermove = (event) => this.OnPointerEvent(event);
+    this._canvas!.nativeElement.onpointerup = (event) => this.OnPointerEvent(event);
 
     if (this._renderingContext) {
       console.log("Stream host initialized.");
@@ -41,6 +46,15 @@ export class StreamHostComponent {
     }
 
     requestAnimationFrame(() => this.RenderFrame());
+  }
+
+  private OnPointerEvent(event: PointerEvent) {
+    //console.log(event);
+
+    let message = new PointerInputMessage(event);
+    //console.log(message);
+
+    this._streamingService.SendMessage(message);
   }
 
   private OnFrameReceived(frame: EncodedFrame) {

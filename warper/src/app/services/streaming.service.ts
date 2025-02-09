@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { MessagingService } from './messaging.service';
-import { PeerConnectionCandidateMessage, PeerConnectionDescriptionMessage, WarprMessage, WarprMessageType } from '../data/messages';
+import { PeerConnectionCandidateMessage, PeerConnectionDescriptionMessage, WarprMessage, WarprMessageType } from '../data/signaling-messages';
 import { IMessagingClient } from '../networking/messaging-client';
 import { EncodedFrame, FrameType } from '../data/frames';
 import { EventOwner, EventPublisher } from '../insfrastructure/events';
@@ -34,6 +34,11 @@ export class StreamingService {
     this._peerConnection.onicecandidate = (event) => this.OnIceCandidateAdded(event.candidate?.candidate);
     this._peerConnection.ondatachannel = (event) => this.OnDataChannel(event);
     this._peerConnection.onconnectionstatechange = (event) => this.OnConnectionStateChanged();
+  }
+
+  public SendMessage(message: any) {
+    let json = JSON.stringify(message);
+    this._reliableConnection?.send(json);
   }
 
   private OnConnectionStateChanged() {

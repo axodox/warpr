@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { WebSocketClient } from '../networking/web-socket-client';
-import { WarprMessage, ConnectionRequest } from '../data/messages';
+import { WarprMessage, ConnectionRequest } from '../data/signaling-messages';
 
 @Injectable({
   providedIn: 'root'
