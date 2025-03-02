@@ -69,6 +69,9 @@
     <ClCompile Include="Messaging\StreamingMessages.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Messaging\StreamConnection.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="vcpkg.json" />
@@ -125,6 +128,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Messaging\StreamingMessages.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Messaging\StreamConnection.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

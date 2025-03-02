@@ -3,5 +3,13 @@
 
 namespace Warpr::Input
 {
-  void TestInput();
+  class InputProvider
+  {
+    inline static const Axodox::Infrastructure::logger _logger{"InputProvider"};
+
+  public:
+    InputProvider(Axodox::Infrastructure::dependency_container* container);
+
+  private:
+  };
 }

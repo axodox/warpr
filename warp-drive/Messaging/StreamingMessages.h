@@ -20,10 +20,7 @@ namespace Warpr::Messaging
     Axodox::Json::json_property<float> X;
     Axodox::Json::json_property<float> Y;
 
-    Point() :
-      X(this, "X"),
-      Y(this, "Y")
-    { }
+    Point();
   };
 
   named_enum(PointerType,
@@ -47,16 +44,8 @@ namespace Warpr::Messaging
     Axodox::Json::json_property<PointerAction> PointerAction;
     Axodox::Json::json_property<Point> Position;
 
-    PointerInputMessage() :
-      PointerId(this, "PointerId"),
-      PointerType(this, "PointerType"),
-      PointerAction(this, "PointerAction"),
-      Position(this, "Position")
-    { }
+    PointerInputMessage();
 
-    virtual WarprStreamingMessageType Type() const override
-    {
-      return WarprStreamingMessageType::PointerInputMessage;
-    }
+    virtual WarprStreamingMessageType Type() const override;
   };
 }

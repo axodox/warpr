@@ -120,6 +120,7 @@
     <ClCompile Include="Infrastructure\RtcLogger.cpp" />
     <ClCompile Include="Input\InputInjector.cpp" />
     <ClCompile Include="Messaging\SignalingMessages.cpp" />
+    <ClCompile Include="Messaging\StreamConnection.cpp" />
     <ClCompile Include="Messaging\StreamingMessages.cpp" />
     <ClCompile Include="Messaging\WebRtcClient.cpp" />
     <ClCompile Include="Messaging\WebSocketClient.cpp" />
@@ -147,6 +148,7 @@
     <ClInclude Include="Infrastructure\RtcLogger.h" />
     <ClInclude Include="Input\InputInjector.h" />
     <ClInclude Include="Messaging\SignalingMessages.h" />
+    <ClInclude Include="Messaging\StreamConnection.h" />
     <ClInclude Include="Messaging\StreamingMessages.h" />
     <ClInclude Include="Messaging\WebRtcClient.h" />
     <ClInclude Include="Messaging\WebSocketClient.h" />

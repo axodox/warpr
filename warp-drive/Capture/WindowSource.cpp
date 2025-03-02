@@ -19,6 +19,7 @@ namespace Warpr::Capture
     _device(container->resolve<GraphicsDevice>()->Device())
   {
     _logger.log(log_severity::information, "Initializing window capture frame source...");
+    _source = description->Source;
 
     //Get WinRT device
     IDirect3DDevice winrtDevice;
@@ -77,6 +78,11 @@ namespace Warpr::Capture
     _session.IsCursorCaptureEnabled(true);
     _session.StartCapture();
     _logger.log(log_severity::information, "Capture started.");
+  }
+
+  std::variant<winrt::Windows::Graphics::DisplayId, winrt::Windows::UI::WindowId> WindowSource::Source() const
+  {
+    return _source;
   }
 
   FrameSourceKind WindowSourceDescription::Type() const

@@ -14,6 +14,8 @@ namespace Warpr::Capture
 
     FrameProvider(Axodox::Infrastructure::dependency_container* container);
 
+    FrameSource* Source() const;
+
   private:
     std::unique_ptr<FrameSource> _source;
 

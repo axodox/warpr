@@ -28,10 +28,13 @@ namespace Warpr::Capture
   public:
     WindowSource(Axodox::Infrastructure::dependency_container* container, const WindowSourceDescription* description);
 
+    std::variant<winrt::Windows::Graphics::DisplayId, winrt::Windows::UI::WindowId> Source() const;
+
   private:
     winrt::com_ptr<ID3D11Device> _device;
     winrt::Windows::Graphics::Capture::GraphicsCaptureItem _captureItem{ nullptr };
     winrt::Windows::Graphics::Capture::Direct3D11CaptureFramePool _framePool{ nullptr };
     winrt::Windows::Graphics::Capture::GraphicsCaptureSession _session{ nullptr };
+    std::variant<winrt::Windows::Graphics::DisplayId, winrt::Windows::UI::WindowId> _source;
   };
 }
