@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { MessagingService } from './messaging.service';
-import { PeerConnectionCandidateMessage, PeerConnectionDescriptionMessage, WarprMessage, WarprMessageType } from '../data/signaling-messages';
+import { PeerConnectionCandidateMessage, PeerConnectionDescriptionMessage, WarprSignalingMessage, WarprSignalingMessageType } from '../data/signaling-messages';
 import { IMessagingClient } from '../networking/messaging-client';
 import { EncodedFrame, FrameType } from '../data/frames';
 import { EventOwner, EventPublisher } from '../insfrastructure/events';
@@ -22,7 +22,7 @@ export class StreamingService {
   constructor(
     private _messagingService: MessagingService) {
 
-    _messagingService.MessageReceived.Subscribe((sender: IMessagingClient<WarprMessage>, message: WarprMessage) => this.OnMessageReceived(sender, message));
+    _messagingService.MessageReceived.Subscribe((sender: IMessagingClient<WarprSignalingMessage>, message: WarprSignalingMessage) => this.OnMessageReceived(sender, message));
 
     let config: RTCConfiguration = {
       iceServers: [
@@ -89,10 +89,10 @@ export class StreamingService {
     this._messagingService.SendMessage(message);
   }
 
-  private async OnMessageReceived(sender: IMessagingClient<WarprMessage>, message: WarprMessage) {
+  private async OnMessageReceived(sender: IMessagingClient<WarprSignalingMessage>, message: WarprSignalingMessage) {
 
     switch (message.$type) {
-      case WarprMessageType.PeerConnectionDescriptionMessage:
+      case WarprSignalingMessageType.PeerConnectionDescriptionMessage:
         await this._peerConnection.setRemoteDescription({ type: "offer", sdp: message.Description });
         let answer = await this._peerConnection.createAnswer();
         await this._peerConnection.setLocalDescription(answer);
@@ -102,7 +102,7 @@ export class StreamingService {
         this._messagingService.SendMessage(answerMessage);
 
         break;
-      case WarprMessageType.PeerConnectionCandidateMessage:
+      case WarprSignalingMessageType.PeerConnectionCandidateMessage:
         await this._peerConnection.addIceCandidate({ candidate: message.Candidate, sdpMid: "0" });
         break;
     }

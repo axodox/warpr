@@ -1,6 +1,6 @@
 #pragma once
 #include "warpr_includes.h"
-#include "Messages.h"
+#include "SignalingMessages.h"
 #include "Core/WarpConfiguration.h"
 
 namespace Warpr::Messaging
@@ -17,10 +17,10 @@ namespace Warpr::Messaging
     bool IsConnected() const;
 
     Axodox::Infrastructure::event_publisher<WebSocketClient*> Connected;
-    Axodox::Infrastructure::event_publisher<WebSocketClient*, const WarprMessage*> MessageReceived;
+    Axodox::Infrastructure::event_publisher<WebSocketClient*, const WarprSignalingMessage*> MessageReceived;
     Axodox::Infrastructure::event_publisher<WebSocketClient*> Disconnected;
 
-    void SendMessage(const WarprMessage& message);
+    void SendMessage(const WarprSignalingMessage& message);
 
   private:
     std::shared_ptr<WarpConfiguration> _settings;

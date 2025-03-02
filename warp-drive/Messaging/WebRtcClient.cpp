@@ -107,17 +107,17 @@ namespace Warpr::Messaging
     }
   }
 
-  void WebRtcClient::OnSignalerMessageReceived(WebSocketClient* sender, const WarprMessage* message)
+  void WebRtcClient::OnSignalerMessageReceived(WebSocketClient* sender, const WarprSignalingMessage* message)
   {
     lock_guard lock(_mutex);
 
     switch (message->Type())
     {
-    case WarprMessageType::PairingCompleteMessage:
+    case WarprSignalingMessageType::PairingCompleteMessage:
       ConnectAsync();
       break;
 
-    case WarprMessageType::PeerConnectionDescriptionMessage:
+    case WarprSignalingMessageType::PeerConnectionDescriptionMessage:
       if (_peerConnection)
       {
         auto descriptionMessage = static_cast<const PeerConnectionDescriptionMessage*>(message);
@@ -126,7 +126,7 @@ namespace Warpr::Messaging
       }
       break;
 
-    case WarprMessageType::PeerConnectionCandidateMessage:
+    case WarprSignalingMessageType::PeerConnectionCandidateMessage:
       if (_peerConnection)
       {
         auto descriptionMessage = static_cast<const PeerConnectionCandidateMessage*>(message);

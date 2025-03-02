@@ -1,7 +1,7 @@
 import { Component, ElementRef, ViewChild } from '@angular/core';
 import { StreamingService } from '../../services/streaming.service';
 import { EncodedFrame, FrameType } from '../../data/frames';
-import { Point, PointerAction, PointerInputMessage, PointerType } from '../../data/input-messages';
+import { Point, PointerAction, PointerInputMessage, PointerType } from '../../data/streaming-messages';
 
 @Component({
   selector: 'app-stream-host',

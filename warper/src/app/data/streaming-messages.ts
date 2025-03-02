@@ -1,3 +1,7 @@
+export enum WarprStreamingMessageType {
+  PointerInputMessage = "PointerInputMessage",
+}
+
 export type Point = {
   X: number;
   Y: number;
@@ -18,6 +22,8 @@ export enum PointerAction {
 }
 
 export class PointerInputMessage {
+  public readonly $type = WarprStreamingMessageType.PointerInputMessage;
+
   public PointerId = -1;
   public PointerType = PointerType.Unknown;
   public PointerAction = PointerAction.Unknown;
@@ -77,3 +83,6 @@ export class PointerInputMessage {
     };
   }
 }
+
+export type WarprSignalingMessage =
+  PointerInputMessage;

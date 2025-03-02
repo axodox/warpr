@@ -1,5 +1,5 @@
 
-export enum WarprMessageType {
+export enum WarprSignalingMessageType {
   ConnectionRequest = "ConnectionRequest",
   PairingCompleteMessage = "PairingCompleteMessage",
   PeerConnectionDescriptionMessage = "PeerConnectionDescriptionMessage",
@@ -8,28 +8,28 @@ export enum WarprMessageType {
 }
 
 export class ConnectionRequest {
-  public readonly $type = WarprMessageType.ConnectionRequest;
+  public readonly $type = WarprSignalingMessageType.ConnectionRequest;
   public SessionId?: string;
 }
 export class PairingCompleteMessage {
-  public readonly $type = WarprMessageType.PairingCompleteMessage;
+  public readonly $type = WarprSignalingMessageType.PairingCompleteMessage;
 }
 
 export class PeerConnectionDescriptionMessage {
-  public readonly $type = WarprMessageType.PeerConnectionDescriptionMessage;
+  public readonly $type = WarprSignalingMessageType.PeerConnectionDescriptionMessage;
   public Description?: string;
 }
 
 export class PeerConnectionCandidateMessage {
-  public readonly $type = WarprMessageType.PeerConnectionCandidateMessage;
+  public readonly $type = WarprSignalingMessageType.PeerConnectionCandidateMessage;
   public Candidate?: string;
 }
 export class StreamingSourcesMessage {
-  public readonly $type = WarprMessageType.StreamingSourcesMessage;
+  public readonly $type = WarprSignalingMessageType.StreamingSourcesMessage;
   public Sources?: string[];
 }
 
-export type WarprMessage =
+export type WarprSignalingMessage =
   ConnectionRequest |
   PeerConnectionDescriptionMessage |
   PeerConnectionCandidateMessage |

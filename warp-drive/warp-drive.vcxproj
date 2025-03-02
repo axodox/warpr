@@ -119,7 +119,8 @@
     <ClCompile Include="Graphics\GraphicsDevice.cpp" />
     <ClCompile Include="Infrastructure\RtcLogger.cpp" />
     <ClCompile Include="Input\InputInjector.cpp" />
-    <ClCompile Include="Messaging\Messages.cpp" />
+    <ClCompile Include="Messaging\SignalingMessages.cpp" />
+    <ClCompile Include="Messaging\StreamingMessages.cpp" />
     <ClCompile Include="Messaging\WebRtcClient.cpp" />
     <ClCompile Include="Messaging\WebSocketClient.cpp" />
     <ClCompile Include="warpr_includes.cpp">
@@ -145,7 +146,8 @@
     <ClInclude Include="Graphics\GraphicsDevice.h" />
     <ClInclude Include="Infrastructure\RtcLogger.h" />
     <ClInclude Include="Input\InputInjector.h" />
-    <ClInclude Include="Messaging\Messages.h" />
+    <ClInclude Include="Messaging\SignalingMessages.h" />
+    <ClInclude Include="Messaging\StreamingMessages.h" />
     <ClInclude Include="Messaging\WebRtcClient.h" />
     <ClInclude Include="Messaging\WebSocketClient.h" />
     <ClInclude Include="warpr_includes.h" />

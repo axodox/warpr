@@ -47,7 +47,7 @@ namespace Warpr::Messaging
 
     Axodox::Infrastructure::event_subscription _signalerMessageReceivedSubscription;
 
-    void OnSignalerMessageReceived(WebSocketClient* sender, const WarprMessage* message);
+    void OnSignalerMessageReceived(WebSocketClient* sender, const WarprSignalingMessage* message);
     winrt::fire_and_forget ConnectAsync();
 
     void OnMessageReceived(WebRtcChannel channel, rtc::message_variant message);

@@ -1,11 +1,11 @@
 import { Injectable } from '@angular/core';
 import { WebSocketClient } from '../networking/web-socket-client';
-import { WarprMessage, ConnectionRequest } from '../data/signaling-messages';
+import { WarprSignalingMessage, ConnectionRequest } from '../data/signaling-messages';
 
 @Injectable({
   providedIn: 'root'
 })
-export class MessagingService extends WebSocketClient<WarprMessage> {
+export class MessagingService extends WebSocketClient<WarprSignalingMessage> {
 
   private static readonly _connectionUri = 'api/sinks/connect';
   private readonly _sessionId = "a5d26e70-2b61-451f-9ecb-7d1b9a76ed1b";
