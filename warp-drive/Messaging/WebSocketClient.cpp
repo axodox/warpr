@@ -57,10 +57,7 @@ namespace Warpr::Messaging
 
   void WebSocketClient::SendMessage(const WarprMessage& warprMessage)
   {
-    unique_ptr<WarprMessage> ptr{ const_cast<WarprMessage*>(&warprMessage) };
-    std::string jsonMessage = stringify_json(ptr);
-    ptr.release();
-
+    std::string jsonMessage = stringify_json(&warprMessage);
     _socket.send(jsonMessage);
   }
 

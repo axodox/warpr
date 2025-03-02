@@ -3,17 +3,18 @@
 
 namespace Warpr::Messaging
 {
-  enum class WarprMessageType
-  {
-    Unknown = 0,
+  named_enum(WarprMessageType, 
+    Unknown,
     ConnectionRequest,
     PairingCompleteMessage,
     PeerConnectionDescriptionMessage,
     PeerConnectionCandidateMessage
-  };
+  );
 
   struct WarprMessage : public Axodox::Json::json_object_base
   {
+    static Axodox::Infrastructure::type_registry<WarprMessage> derived_types;
+
     virtual WarprMessageType Type() const = 0;
   };
 
@@ -47,18 +48,5 @@ namespace Warpr::Messaging
     PeerConnectionCandidateMessage();
 
     virtual WarprMessageType Type() const override;
-  };
-}
-
-namespace Axodox::Json
-{
-  template <>
-  struct json_serializer<std::unique_ptr<Warpr::Messaging::WarprMessage>>
-  {
-    static const std::string type_names[];
-    static const std::function<std::unique_ptr<Warpr::Messaging::WarprMessage>()> type_factories[];
-    
-    static Infrastructure::value_ptr<json_value> to_json(const std::unique_ptr<Warpr::Messaging::WarprMessage>& value);
-    static bool from_json(const json_value* json, std::unique_ptr<Warpr::Messaging::WarprMessage>& value);
   };
 }

@@ -2,7 +2,7 @@
 
 namespace Warpr.Gateway.Messages
 {
-  [JsonPolymorphic(TypeDiscriminatorPropertyName = "Type")]
+  [JsonPolymorphic]
   [JsonDerivedType(typeof(ConnectionRequest), nameof(ConnectionRequest))]
   [JsonDerivedType(typeof(PairingCompleteMessage), nameof(PairingCompleteMessage))]
   [JsonDerivedType(typeof(PeerConnectionDescriptionMessage), nameof(PeerConnectionDescriptionMessage))]

@@ -10,6 +10,12 @@ namespace Warpr::Messaging
     LowLatency
   };
 
+  struct WebRtcMessage
+  {
+    std::variant<std::span<const uint8_t>, std::string_view> Data = {};
+    WebRtcChannel Channel = {};
+  };
+
   class WebRtcClient
   {
     inline static const Axodox::Infrastructure::logger _logger{ "WebRtcClient" };
@@ -20,6 +26,8 @@ namespace Warpr::Messaging
 
     bool IsConnected() const;
     void SendMessage(std::span<const uint8_t> bytes, WebRtcChannel channelType);
+
+    Axodox::Infrastructure::event_publisher<WebRtcClient*, WebRtcMessage> MessageReceived;
 
   private:
     static const std::string_view _stateNames[];
@@ -41,5 +49,7 @@ namespace Warpr::Messaging
 
     void OnSignalerMessageReceived(WebSocketClient* sender, const WarprMessage* message);
     winrt::fire_and_forget ConnectAsync();
+
+    void OnMessageReceived(WebRtcChannel channel, rtc::message_variant message);
   };
 }

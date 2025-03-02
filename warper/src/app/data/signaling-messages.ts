@@ -8,24 +8,24 @@ export enum WarprMessageType {
 }
 
 export class ConnectionRequest {
-  public readonly Type = WarprMessageType.ConnectionRequest;
+  public readonly $type = WarprMessageType.ConnectionRequest;
   public SessionId?: string;
 }
 export class PairingCompleteMessage {
-  public readonly Type = WarprMessageType.PairingCompleteMessage;
+  public readonly $type = WarprMessageType.PairingCompleteMessage;
 }
 
 export class PeerConnectionDescriptionMessage {
-  public readonly Type = WarprMessageType.PeerConnectionDescriptionMessage;
+  public readonly $type = WarprMessageType.PeerConnectionDescriptionMessage;
   public Description?: string;
 }
 
 export class PeerConnectionCandidateMessage {
-  public readonly Type = WarprMessageType.PeerConnectionCandidateMessage;
+  public readonly $type = WarprMessageType.PeerConnectionCandidateMessage;
   public Candidate?: string;
 }
 export class StreamingSourcesMessage {
-  public readonly Type = WarprMessageType.StreamingSourcesMessage;
+  public readonly $type = WarprMessageType.StreamingSourcesMessage;
   public Sources?: string[];
 }
 

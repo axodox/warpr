@@ -4,17 +4,17 @@ export type Point = {
 }
 
 export enum PointerType {
-  Unknown,
-  Mouse,
-  Pen,
-  Touch
+  Unknown = "Unknown",
+  Mouse = "Mouse",
+  Pen = "Pen",
+  Touch = "Touch"
 }
 
 export enum PointerAction {
-  Unknown,
-  Pressed,
-  Moved,
-  Released
+  Unknown = "Unknown",
+  Pressed = "Pressed",
+  Moved = "Moved",
+  Released = "Released"
 }
 
 export class PointerInputMessage {

@@ -91,7 +91,7 @@ export class StreamingService {
 
   private async OnMessageReceived(sender: IMessagingClient<WarprMessage>, message: WarprMessage) {
 
-    switch (message.Type) {
+    switch (message.$type) {
       case WarprMessageType.PeerConnectionDescriptionMessage:
         await this._peerConnection.setRemoteDescription({ type: "offer", sdp: message.Description });
         let answer = await this._peerConnection.createAnswer();
