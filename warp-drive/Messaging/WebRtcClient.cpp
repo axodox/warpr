@@ -202,7 +202,7 @@ namespace Warpr::Messaging
       });
 
     auto lifetime = _containerRef.try_lock();
-    co_await 1s;
+    co_await 10s;
 
     if (_peerConnection->state() == PeerConnection::State::Connected) co_return;
 

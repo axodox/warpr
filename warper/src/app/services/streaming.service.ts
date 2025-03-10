@@ -26,7 +26,28 @@ export class StreamingService {
 
     let config: RTCConfiguration = {
       iceServers: [
-        { urls: "stun:stun.l.google.com:19302" }
+        { urls: "stun:stun.l.google.com:19302" },
+        { urls: "stun:stun.relay.metered.ca:80" },
+        {
+          urls: "turn:global.relay.metered.ca:80",
+          username: "cb51ef701a61be3cdc89466f",
+          credential: "BBnGCvnTLaxhVbuf"
+        },
+        {
+          urls: "turn:global.relay.metered.ca:80?transport=tcp",
+          username: "cb51ef701a61be3cdc89466f",
+          credential: "BBnGCvnTLaxhVbuf"
+        },
+        {
+          urls: "turn:global.relay.metered.ca:443",
+          username: "cb51ef701a61be3cdc89466f",
+          credential: "BBnGCvnTLaxhVbuf"
+        },
+        {
+          urls: "turns:global.relay.metered.ca:443?transport=tcp",
+          username: "cb51ef701a61be3cdc89466f",
+          credential: "BBnGCvnTLaxhVbuf"
+        }
       ]
     };
 
