@@ -4,7 +4,7 @@
 
 namespace Warpr
 {
-	struct WarpConfiguration
+	struct WARP_DRIVE_API WarpConfiguration
 	{
 		Axodox::Infrastructure::uuid SessionId{"a5d26e70-2b61-451f-9ecb-7d1b9a76ed1b"};
 		Axodox::Infrastructure::log_severity NetworkingLogSeverity = Axodox::Infrastructure::log_severity::warning;

@@ -1,7 +1,6 @@
 #include "warpr_includes.h"
 #include "VideoEncoder.h"
 #include "Graphics/GraphicsDevice.h"
-#include "d3d11.h"
 
 using namespace Axodox::Infrastructure;
 using namespace DirectX;

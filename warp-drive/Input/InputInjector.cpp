@@ -2,8 +2,6 @@
 #include "InputInjector.h"
 #include "Capture/FrameProvider.h"
 #include "Capture/WindowSource.h"
-#include <winrt/windows.ui.input.preview.injection.h>
-#include <windows.graphics.display.interop.h>
 
 using namespace Axodox::Infrastructure;
 using namespace Warpr::Capture;

@@ -1,13 +1,10 @@
 #include "warpr_includes.h"
-
 #include "WindowLocator.h"
-
-#pragma comment (lib, "shlwapi.lib")
 
 using namespace std;
 using namespace winrt;
 
-namespace warper
+namespace Warpr::Capture
 {
   BOOL CALLBACK EnumWindowsCallback(
     _In_ HWND   rawWindowHandle,

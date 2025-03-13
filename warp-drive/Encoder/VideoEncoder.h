@@ -1,7 +1,6 @@
 #pragma once
 #include "warpr_includes.h"
 #include "Capture/FrameSource.h"
-#include "nvEncodeAPI.h"
 
 namespace Warpr::Encoder
 {

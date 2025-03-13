@@ -1,13 +1,9 @@
 #pragma once
-
-#include <string>
-#include <vector>
-#include <map>
-#include <mutex>
+#include "warpr_includes.h"
 
 #undef FindWindow
 
-namespace warper
+namespace Warpr::Capture
 {
   struct WindowInfo
   {

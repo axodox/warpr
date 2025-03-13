@@ -18,6 +18,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		ToDo.md = ToDo.md
 	EndProjectSection
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "desk-beamer", "desk-beamer\desk-beamer.vcxproj", "{3C46147B-3FB2-484C-9680-62FF3D361D6F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -82,6 +84,18 @@ Global
 		{1F553636-9920-4D85-B8AB-812AC321C3C4}.Release|x64.Build.0 = Release|x64
 		{1F553636-9920-4D85-B8AB-812AC321C3C4}.Release|x86.ActiveCfg = Release|x64
 		{1F553636-9920-4D85-B8AB-812AC321C3C4}.Release|x86.Build.0 = Release|x64
+		{3C46147B-3FB2-484C-9680-62FF3D361D6F}.Debug|Any CPU.ActiveCfg = Debug|x64
+		{3C46147B-3FB2-484C-9680-62FF3D361D6F}.Debug|Any CPU.Build.0 = Debug|x64
+		{3C46147B-3FB2-484C-9680-62FF3D361D6F}.Debug|x64.ActiveCfg = Debug|x64
+		{3C46147B-3FB2-484C-9680-62FF3D361D6F}.Debug|x64.Build.0 = Debug|x64
+		{3C46147B-3FB2-484C-9680-62FF3D361D6F}.Debug|x86.ActiveCfg = Debug|Win32
+		{3C46147B-3FB2-484C-9680-62FF3D361D6F}.Debug|x86.Build.0 = Debug|Win32
+		{3C46147B-3FB2-484C-9680-62FF3D361D6F}.Release|Any CPU.ActiveCfg = Release|x64
+		{3C46147B-3FB2-484C-9680-62FF3D361D6F}.Release|Any CPU.Build.0 = Release|x64
+		{3C46147B-3FB2-484C-9680-62FF3D361D6F}.Release|x64.ActiveCfg = Release|x64
+		{3C46147B-3FB2-484C-9680-62FF3D361D6F}.Release|x64.Build.0 = Release|x64
+		{3C46147B-3FB2-484C-9680-62FF3D361D6F}.Release|x86.ActiveCfg = Release|Win32
+		{3C46147B-3FB2-484C-9680-62FF3D361D6F}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -1,6 +1,5 @@
 #pragma once
 #include "warpr_includes.h"
-#include <d3d11.h>
 
 namespace Warpr::Capture
 {
@@ -12,13 +11,13 @@ namespace Warpr::Capture
     Window
   };
 
-  struct FrameSourceDescription
+  struct WARP_DRIVE_API FrameSourceDescription
   {
     virtual FrameSourceKind Type() const = 0;
     virtual ~FrameSourceDescription() = default;
   };
 
-  class FrameSource
+  class WARP_DRIVE_API FrameSource
   {
     inline static const Axodox::Infrastructure::logger _logger{ "FrameSource" };
     Axodox::Infrastructure::event_owner _events;

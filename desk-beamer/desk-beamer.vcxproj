@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
@@ -21,13 +21,13 @@
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
-    <ProjectGuid>{0383b8f8-a914-4cf4-8197-73c681c17a8a}</ProjectGuid>
-    <RootNamespace>warpdrive</RootNamespace>
+    <ProjectGuid>{3c46147b-3fb2-484c-9680-62ff3d361d6f}</ProjectGuid>
+    <RootNamespace>deskbeamer</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
     <PlatformToolset>v143</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
     <UseDebugLibraries Condition="'$(Configuration)'=='Debug'">true</UseDebugLibraries>
@@ -55,23 +55,20 @@
   <PropertyGroup>
     <OutDir>$(ProjectDir)bin\$(Platform)\$(Configuration)\</OutDir>
     <IntDir>$(ProjectDir)obj\$(Platform)\$(Configuration)\</IntDir>
-    <TargetName>WarpDrive</TargetName>
+    <TargetName>DeskBeamer</TargetName>
   </PropertyGroup>
   <PropertyGroup Label="Vcpkg">
     <VcpkgEnableManifest>true</VcpkgEnableManifest>
   </PropertyGroup>
   <ItemDefinitionGroup>
     <ClCompile>
-      <PrecompiledHeader>Use</PrecompiledHeader>
-      <PrecompiledHeaderFile>warpr_includes.h</PrecompiledHeaderFile>
-      <PrecompiledHeaderOutputFile>$(IntDir)warpr_includes.pch</PrecompiledHeaderOutputFile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>WIN32;_CONSOLE;WARP_DRIVE_EXPORT;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
-      <AdditionalIncludeDirectories>$(ProjectDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)..\warp-drive\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -95,64 +92,24 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Capture\FrameProvider.cpp" />
-    <ClCompile Include="Core\WarpSession.cpp" />
-    <ClCompile Include="Encoder\VideoEncoder.cpp" />
-    <ClCompile Include="Capture\FrameSource.cpp" />
-    <ClCompile Include="Capture\WindowSource.cpp" />
-    <ClCompile Include="Core\WarpConfiguration.cpp" />
-    <ClCompile Include="Core\WarpDrive.cpp" />
-    <ClCompile Include="Encoder\VideoPreprocessor.cpp" />
-    <ClCompile Include="Graphics\GraphicsDevice.cpp" />
-    <ClCompile Include="Infrastructure\RtcLogger.cpp" />
-    <ClCompile Include="Input\InputInjector.cpp" />
-    <ClCompile Include="Messaging\SignalingMessages.cpp" />
-    <ClCompile Include="Messaging\StreamConnection.cpp" />
-    <ClCompile Include="Messaging\StreamingMessages.cpp" />
-    <ClCompile Include="Messaging\WebRtcClient.cpp" />
-    <ClCompile Include="Messaging\WebSocketClient.cpp" />
-    <ClCompile Include="warpr_includes.cpp">
-      <PrecompiledHeader>Create</PrecompiledHeader>
-    </ClCompile>
-    <ClCompile Include="warp-drive.cpp" />
-    <ClCompile Include="Capture\WindowLocator.cpp" />
+    <ClCompile Include="desk-beamer.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\warp-drive\warp-drive.vcxproj">
+      <Project>{0383b8f8-a914-4cf4-8197-73c681c17a8a}</Project>
+    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
-    <None Include="vcpkg-configuration.json" />
-    <None Include="vcpkg.json" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="Capture\FrameProvider.h" />
-    <ClInclude Include="Core\WarpSession.h" />
-    <ClInclude Include="Encoder\VideoEncoder.h" />
-    <ClInclude Include="Capture\FrameSource.h" />
-    <ClInclude Include="Capture\WindowSource.h" />
-    <ClInclude Include="Core\WarpConfiguration.h" />
-    <ClInclude Include="Core\WarpDrive.h" />
-    <ClInclude Include="Encoder\VideoPreprocessor.h" />
-    <ClInclude Include="Graphics\GraphicsDevice.h" />
-    <ClInclude Include="Infrastructure\RtcLogger.h" />
-    <ClInclude Include="Input\InputInjector.h" />
-    <ClInclude Include="Messaging\SignalingMessages.h" />
-    <ClInclude Include="Messaging\StreamConnection.h" />
-    <ClInclude Include="Messaging\StreamingMessages.h" />
-    <ClInclude Include="Messaging\WebRtcClient.h" />
-    <ClInclude Include="Messaging\WebSocketClient.h" />
-    <ClInclude Include="Include\WarpDrive.h" />
-    <ClInclude Include="warpr_includes.h" />
-    <ClInclude Include="Capture\WindowLocator.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
-    <Import Project="..\packages\nvenc.12.2.72\build\native\nvenc.targets" Condition="Exists('..\packages\nvenc.12.2.72\build\native\nvenc.targets')" />
     <Import Project="..\packages\Axodox.Common.1.0.47\build\native\Axodox.Common.targets" Condition="Exists('..\packages\Axodox.Common.1.0.47\build\native\Axodox.Common.targets')" />
   </ImportGroup>
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>
       <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
     </PropertyGroup>
-    <Error Condition="!Exists('..\packages\nvenc.12.2.72\build\native\nvenc.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\nvenc.12.2.72\build\native\nvenc.targets'))" />
     <Error Condition="!Exists('..\packages\Axodox.Common.1.0.47\build\native\Axodox.Common.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Axodox.Common.1.0.47\build\native\Axodox.Common.targets'))" />
   </Target>
 </Project>
