@@ -15,13 +15,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="warp-drive.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="WindowLocator.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Messaging\Messages.cpp">
+    <ClCompile Include="Messaging\SignalingMessages.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Infrastructure\RtcLogger.cpp">
@@ -63,20 +57,27 @@
     <ClCompile Include="Core\WarpSession.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Input\InputInjector.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Messaging\StreamingMessages.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Messaging\StreamConnection.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Capture\WindowLocator.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="vcpkg.json" />
-    <None Include="vcpkg-configuration.json" />
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="WindowLocator.h">
-      <Filter>Source Files</Filter>
-    </ClInclude>
     <ClInclude Include="Messaging\WebSocketClient.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Messaging\Messages.h">
+    <ClInclude Include="Messaging\SignalingMessages.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Infrastructure\RtcLogger.h">
@@ -113,6 +114,21 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Core\WarpSession.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Input\InputInjector.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Messaging\StreamingMessages.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Messaging\StreamConnection.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\WarpDrive.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Capture\WindowLocator.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

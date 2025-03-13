@@ -22,6 +22,11 @@ namespace Warpr::Capture
     _logger.log(log_severity::information, "Frame source ready.");
   }
 
+  FrameSource* FrameProvider::Source() const
+  {
+    return _source.get();
+  }
+
   void FrameProvider::OnFrameArrived(FrameSource* sender, const Frame& eventArgs)
   {
     _events.raise(FrameArrived, sender, eventArgs);

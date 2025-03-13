@@ -3,7 +3,7 @@
 
 namespace Warpr
 {
-  struct WarpDrive
+  struct WARP_DRIVE_API WarpDrive
   {
     inline static const Axodox::Infrastructure::logger _logger{ "WarpDrive" };
 

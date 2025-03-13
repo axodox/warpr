@@ -55,12 +55,9 @@ namespace Warpr::Messaging
     return _socket.isOpen();
   }
 
-  void WebSocketClient::SendMessage(const WarprMessage& warprMessage)
+  void WebSocketClient::SendMessage(const WarprSignalingMessage& warprMessage)
   {
-    unique_ptr<WarprMessage> ptr{ const_cast<WarprMessage*>(&warprMessage) };
-    std::string jsonMessage = stringify_json(ptr);
-    ptr.release();
-
+    std::string jsonMessage = stringify_json(&warprMessage);
     _socket.send(jsonMessage);
   }
 
@@ -73,7 +70,7 @@ namespace Warpr::Messaging
     }
 
     auto& jsonMessage = get<string>(rawMessage);
-    auto warprMessage = try_parse_json<unique_ptr<WarprMessage>>(jsonMessage);
+    auto warprMessage = try_parse_json<unique_ptr<WarprSignalingMessage>>(jsonMessage);
     if (!warprMessage)
     {
       _logger.log(log_severity::error, "Failed to parse message:\n{}", jsonMessage);

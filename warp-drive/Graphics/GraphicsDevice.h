@@ -1,9 +1,6 @@
 #pragma once
 #include "warpr_includes.h"
 
-#include <d3d11.h>
-#include <winrt/base.h>
-
 namespace Warpr::Graphics
 {
   class GraphicsDevice

@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">  
+  <PropertyGroup>
+    <WarpDrive-Runtime>desktop</WarpDrive-Runtime>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <WarpDrive-Libraries>$(MSBuildThisFileDirectory)..\..\bin\$(WarpDrive-Runtime)\$(Platform)\$(Configuration)</WarpDrive-Libraries>
+    <WarpDrive-DependencyRoot>$(MSBuildThisFileDirectory)..\..\lib\$(WarpDrive-Runtime)\$(Platform)\$(Configuration)</WarpDrive-DependencyRoot>
+    <WarpDrive-Dependencies>$(WarpDrive-DependencyRoot)\*.lib</WarpDrive-Dependencies>    
+    <WarpDrive-Includes>$(MSBuildThisFileDirectory)..\..\include</WarpDrive-Includes>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Warpr-Location)'!=''">
+    <WarpDrive-Libraries>$(Warpr-Location)\warp-drive\bin\$(Platform)\$(Configuration)</WarpDrive-Libraries>
+    <WarpDrive-DependencyRoot>$(Warpr-Location)\warp-drive\bin\$(Platform)\$(Configuration)</WarpDrive-DependencyRoot>
+    <WarpDrive-Dependencies>$(Warpr-DependencyRoot)\*.lib</WarpDrive-Dependencies>    
+    <WarpDrive-Includes>$(Warpr-Location)\warp-drive</WarpDrive-Includes>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="$(Warpr-Location)\warp-drive\warp-drive.vcxproj">
+      <Project>{0383b8f8-a914-4cf4-8197-73c681c17a8a}</Project>
+    </ProjectReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="$(WarpDrive-Libraries)\*.*">
+      <InProject>False</InProject>
+      <Link>%(FileName)%(Extension)</Link>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+  <ItemDefinitionGroup>
+    <Link>
+      <AdditionalLibraryDirectories>$(WarpDrive-Libraries);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>$(WarpDrive-Dependencies);%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <AdditionalIncludeDirectories>$(WarpDrive-Includes);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+  </ItemDefinitionGroup>
+</Project>

@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { MessagingService } from './messaging.service';
-import { PeerConnectionCandidateMessage, PeerConnectionDescriptionMessage, WarprMessage, WarprMessageType } from '../data/messages';
+import { PeerConnectionCandidateMessage, PeerConnectionDescriptionMessage, WarprSignalingMessage, WarprSignalingMessageType } from '../data/signaling-messages';
 import { IMessagingClient } from '../networking/messaging-client';
 import { EncodedFrame, FrameType } from '../data/frames';
 import { EventOwner, EventPublisher } from '../insfrastructure/events';
@@ -22,11 +22,32 @@ export class StreamingService {
   constructor(
     private _messagingService: MessagingService) {
 
-    _messagingService.MessageReceived.Subscribe((sender: IMessagingClient<WarprMessage>, message: WarprMessage) => this.OnMessageReceived(sender, message));
+    _messagingService.MessageReceived.Subscribe((sender: IMessagingClient<WarprSignalingMessage>, message: WarprSignalingMessage) => this.OnMessageReceived(sender, message));
 
     let config: RTCConfiguration = {
       iceServers: [
-        { urls: "stun:stun.l.google.com:19302" }
+        { urls: "stun:stun.l.google.com:19302" },
+        { urls: "stun:stun.relay.metered.ca:80" },
+        {
+          urls: "turn:global.relay.metered.ca:80",
+          username: "cb51ef701a61be3cdc89466f",
+          credential: "BBnGCvnTLaxhVbuf"
+        },
+        {
+          urls: "turn:global.relay.metered.ca:80?transport=tcp",
+          username: "cb51ef701a61be3cdc89466f",
+          credential: "BBnGCvnTLaxhVbuf"
+        },
+        {
+          urls: "turn:global.relay.metered.ca:443",
+          username: "cb51ef701a61be3cdc89466f",
+          credential: "BBnGCvnTLaxhVbuf"
+        },
+        {
+          urls: "turns:global.relay.metered.ca:443?transport=tcp",
+          username: "cb51ef701a61be3cdc89466f",
+          credential: "BBnGCvnTLaxhVbuf"
+        }
       ]
     };
 
@@ -34,6 +55,11 @@ export class StreamingService {
     this._peerConnection.onicecandidate = (event) => this.OnIceCandidateAdded(event.candidate?.candidate);
     this._peerConnection.ondatachannel = (event) => this.OnDataChannel(event);
     this._peerConnection.onconnectionstatechange = (event) => this.OnConnectionStateChanged();
+  }
+
+  public SendMessage(message: any) {
+    let json = JSON.stringify(message);
+    this._reliableConnection?.send(json);
   }
 
   private OnConnectionStateChanged() {
@@ -84,10 +110,10 @@ export class StreamingService {
     this._messagingService.SendMessage(message);
   }
 
-  private async OnMessageReceived(sender: IMessagingClient<WarprMessage>, message: WarprMessage) {
+  private async OnMessageReceived(sender: IMessagingClient<WarprSignalingMessage>, message: WarprSignalingMessage) {
 
-    switch (message.Type) {
-      case WarprMessageType.PeerConnectionDescriptionMessage:
+    switch (message.$type) {
+      case WarprSignalingMessageType.PeerConnectionDescriptionMessage:
         await this._peerConnection.setRemoteDescription({ type: "offer", sdp: message.Description });
         let answer = await this._peerConnection.createAnswer();
         await this._peerConnection.setLocalDescription(answer);
@@ -97,7 +123,7 @@ export class StreamingService {
         this._messagingService.SendMessage(answerMessage);
 
         break;
-      case WarprMessageType.PeerConnectionCandidateMessage:
+      case WarprSignalingMessageType.PeerConnectionCandidateMessage:
         await this._peerConnection.addIceCandidate({ candidate: message.Candidate, sdpMid: "0" });
         break;
     }

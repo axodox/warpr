@@ -26,31 +26,13 @@
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
-    <UseDebugLibraries>true</UseDebugLibraries>
+  <PropertyGroup Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
     <PlatformToolset>v143</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
-    <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v143</PlatformToolset>
-    <WholeProgramOptimization>true</WholeProgramOptimization>
-    <CharacterSet>Unicode</CharacterSet>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
-    <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v143</PlatformToolset>
-    <CharacterSet>Unicode</CharacterSet>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
-    <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v143</PlatformToolset>
-    <WholeProgramOptimization>true</WholeProgramOptimization>
-    <CharacterSet>Unicode</CharacterSet>
+    <UseDebugLibraries Condition="'$(Configuration)'=='Debug'">true</UseDebugLibraries>
+    <UseDebugLibraries Condition="'$(Configuration)'=='Release'">false</UseDebugLibraries>
+    <WholeProgramOptimization Condition="'$(Configuration)'=='Release'">true</WholeProgramOptimization>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
@@ -70,8 +52,10 @@
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
-  <PropertyGroup Label="Vcpkg">
-    <VcpkgEnableManifest>true</VcpkgEnableManifest>
+  <PropertyGroup>
+    <OutDir>$(ProjectDir)bin\$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>$(ProjectDir)obj\$(Platform)\$(Configuration)\</IntDir>
+    <TargetName>WarpDrive</TargetName>
   </PropertyGroup>
   <ItemDefinitionGroup>
     <ClCompile>
@@ -80,7 +64,7 @@
       <PrecompiledHeaderOutputFile>$(IntDir)warpr_includes.pch</PrecompiledHeaderOutputFile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>WIN32;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_CONSOLE;WARP_DRIVE_EXPORT;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
@@ -118,19 +102,19 @@
     <ClCompile Include="Encoder\VideoPreprocessor.cpp" />
     <ClCompile Include="Graphics\GraphicsDevice.cpp" />
     <ClCompile Include="Infrastructure\RtcLogger.cpp" />
-    <ClCompile Include="Messaging\Messages.cpp" />
+    <ClCompile Include="Input\InputInjector.cpp" />
+    <ClCompile Include="Messaging\SignalingMessages.cpp" />
+    <ClCompile Include="Messaging\StreamConnection.cpp" />
+    <ClCompile Include="Messaging\StreamingMessages.cpp" />
     <ClCompile Include="Messaging\WebRtcClient.cpp" />
     <ClCompile Include="Messaging\WebSocketClient.cpp" />
     <ClCompile Include="warpr_includes.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="warp-drive.cpp" />
-    <ClCompile Include="WindowLocator.cpp" />
+    <ClCompile Include="Capture\WindowLocator.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
-    <None Include="vcpkg-configuration.json" />
-    <None Include="vcpkg.json" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Capture\FrameProvider.h" />
@@ -143,22 +127,28 @@
     <ClInclude Include="Encoder\VideoPreprocessor.h" />
     <ClInclude Include="Graphics\GraphicsDevice.h" />
     <ClInclude Include="Infrastructure\RtcLogger.h" />
-    <ClInclude Include="Messaging\Messages.h" />
+    <ClInclude Include="Input\InputInjector.h" />
+    <ClInclude Include="Messaging\SignalingMessages.h" />
+    <ClInclude Include="Messaging\StreamConnection.h" />
+    <ClInclude Include="Messaging\StreamingMessages.h" />
     <ClInclude Include="Messaging\WebRtcClient.h" />
     <ClInclude Include="Messaging\WebSocketClient.h" />
+    <ClInclude Include="Include\WarpDrive.h" />
     <ClInclude Include="warpr_includes.h" />
-    <ClInclude Include="WindowLocator.h" />
+    <ClInclude Include="Capture\WindowLocator.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
-    <Import Project="..\packages\Axodox.Common.1.0.42\build\native\Axodox.Common.targets" Condition="Exists('..\packages\Axodox.Common.1.0.42\build\native\Axodox.Common.targets')" />
     <Import Project="..\packages\nvenc.12.2.72\build\native\nvenc.targets" Condition="Exists('..\packages\nvenc.12.2.72\build\native\nvenc.targets')" />
+    <Import Project="..\packages\libdatachannel.0.22.4.1\build\native\libdatachannel.targets" Condition="Exists('..\packages\libdatachannel.0.22.4.1\build\native\libdatachannel.targets')" />
+    <Import Project="..\packages\Axodox.Common.1.0.48\build\native\Axodox.Common.targets" Condition="Exists('..\packages\Axodox.Common.1.0.48\build\native\Axodox.Common.targets')" />
   </ImportGroup>
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>
       <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
     </PropertyGroup>
-    <Error Condition="!Exists('..\packages\Axodox.Common.1.0.42\build\native\Axodox.Common.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Axodox.Common.1.0.42\build\native\Axodox.Common.targets'))" />
     <Error Condition="!Exists('..\packages\nvenc.12.2.72\build\native\nvenc.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\nvenc.12.2.72\build\native\nvenc.targets'))" />
+    <Error Condition="!Exists('..\packages\libdatachannel.0.22.4.1\build\native\libdatachannel.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\libdatachannel.0.22.4.1\build\native\libdatachannel.targets'))" />
+    <Error Condition="!Exists('..\packages\Axodox.Common.1.0.48\build\native\Axodox.Common.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Axodox.Common.1.0.48\build\native\Axodox.Common.targets'))" />
   </Target>
 </Project>
