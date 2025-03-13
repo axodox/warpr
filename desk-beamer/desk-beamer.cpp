@@ -2,6 +2,11 @@
 
 #include <iostream>
 
+using namespace Warpr;
+using namespace Warpr::Capture;
+using namespace std;
+using namespace winrt::Windows::Graphics::Display;
+
 int main()
 {
   WarpConfiguration configuration{

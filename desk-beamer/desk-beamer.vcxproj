@@ -27,7 +27,7 @@
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Label="Configuration">
-    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <ConfigurationType>Application</ConfigurationType>
     <PlatformToolset>v143</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
     <UseDebugLibraries Condition="'$(Configuration)'=='Debug'">true</UseDebugLibraries>
@@ -57,9 +57,6 @@
     <IntDir>$(ProjectDir)obj\$(Platform)\$(Configuration)\</IntDir>
     <TargetName>DeskBeamer</TargetName>
   </PropertyGroup>
-  <PropertyGroup Label="Vcpkg">
-    <VcpkgEnableManifest>true</VcpkgEnableManifest>
-  </PropertyGroup>
   <ItemDefinitionGroup>
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
@@ -73,6 +70,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>$(ProjectDir)..\warp-drive\bin\$(Platform)\$(Configuration)\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)'=='Debug'">
@@ -102,14 +100,25 @@
   <ItemGroup>
     <None Include="packages.config" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="$(ProjectDir)..\warp-drive\bin\$(Platform)\$(Configuration)\*.dll">
+      <InProject>False</InProject>
+      <Link>%(FileName)%(Extension)</Link>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
     <Import Project="..\packages\Axodox.Common.1.0.47\build\native\Axodox.Common.targets" Condition="Exists('..\packages\Axodox.Common.1.0.47\build\native\Axodox.Common.targets')" />
+    <Import Project="..\packages\libdatachannel.0.22.4\build\native\libdatachannel.targets" Condition="Exists('..\packages\libdatachannel.0.22.4\build\native\libdatachannel.targets')" />
+    <Import Project="..\packages\nvenc.12.2.72\build\native\nvenc.targets" Condition="Exists('..\packages\nvenc.12.2.72\build\native\nvenc.targets')" />
   </ImportGroup>
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>
       <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
     </PropertyGroup>
     <Error Condition="!Exists('..\packages\Axodox.Common.1.0.47\build\native\Axodox.Common.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Axodox.Common.1.0.47\build\native\Axodox.Common.targets'))" />
+    <Error Condition="!Exists('..\packages\libdatachannel.0.22.4\build\native\libdatachannel.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\libdatachannel.0.22.4\build\native\libdatachannel.targets'))" />
+    <Error Condition="!Exists('..\packages\nvenc.12.2.72\build\native\nvenc.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\nvenc.12.2.72\build\native\nvenc.targets'))" />
   </Target>
 </Project>
