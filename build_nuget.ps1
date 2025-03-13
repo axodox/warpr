@@ -11,6 +11,9 @@ Get-Content "$env:temp\vcvars.txt" | Foreach-Object {
   }
 }
 
+Write-Host 'Update dependencies...' -ForegroundColor Magenta
+.\Tools\nuget.exe restore .\warpr.sln
+
 # Build projects
 $coreCount = (Get-CimInstance -class Win32_ComputerSystem).NumberOfLogicalProcessors
 $configurations = "Debug", "Release"
