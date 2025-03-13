@@ -1,0 +1,59 @@
+<?xml version="1.0"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2013/05/nuspec.xsd">
+  <metadata>
+    <!-- The identifier that must be unique within the hosting gallery -->
+    <id>Warpr.WarpDrive</id>
+
+    <!-- The package version number that is used when resolving dependencies -->
+    <version>1.0.0.0</version>
+
+    <!-- Authors contain text that appears directly on the gallery -->
+    <authors>Peter Major</authors>
+
+    <!-- Owners are typically nuget.org identities that allow gallery
+         users to earily find other packages by the same owners.  -->
+    <owners>axodox</owners>
+
+    <!-- License and project URLs provide links for the gallery -->
+    <license type="expression">MIT</license>
+    <repository type="git" url="https://github.com/axodox/warpr" branch="main"/>
+
+    <!-- The icon is used in Visual Studio's package manager UI -->
+    <!--<icon>icon.png</icon>-->
+
+    <!-- If true, this value prompts the user to accept the license when
+             installing the package. -->
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+
+    <!-- Any details about this particular release -->
+    <releaseNotes>Initial release.</releaseNotes>
+
+    <!-- The description can be used in package manager UI. Note that the
+             nuget.org gallery uses information you add in the portal. -->
+    <description>Warper is a WebRTC based ultra-low latency video streaming library.</description>
+
+    <!-- Copyright information -->
+    <copyright>Copyright ©2025 Peter Major</copyright>
+
+    <!-- Tags appear in the gallery and can be used for tag searches -->
+    <tags>axodox webrtc streaming nvenc native</tags>
+  
+    <dependencies>
+      <dependency id="Axodox.Common" version="1.0.48" />
+      <dependency id="libdatachannel" version="0.22.4.1" />
+      <dependency id="nvenc" version="12.2.72" />
+    </dependencies>
+  </metadata>
+
+  <!-- A readme.txt will be displayed when the package is installed -->
+  <files>
+    <file src="Warpr.WarpDrive.targets" target="build/native/Warpr.WarpDrive.targets" />
+    <file src="**\*.h" target="include" />
+    
+    <file src="bin\**\WarpDrive.lib" target="lib\desktop" />
+    <file src="bin\**\WarpDrive.exp" target="lib\desktop" />
+
+    <file src="bin\**\WarpDrive.dll" target="bin\desktop" />
+    <file src="bin\**\WarpDrive.pdb" target="bin\desktop" />
+  </files>
+</package>
