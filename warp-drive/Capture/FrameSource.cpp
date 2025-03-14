@@ -1,6 +1,7 @@
 #include "warpr_includes.h"
 #include "FrameSource.h"
 #include "WindowSource.h"
+#include "FrameSourceFactory.h"
 
 using namespace Axodox::Infrastructure;
 using namespace std;
@@ -23,6 +24,10 @@ namespace Warpr::Capture
     {
     case FrameSourceKind::Window:
       return make_unique<WindowSource>(container, static_cast<const WindowSourceDescription*>(description));
+
+    case FrameSourceKind::Factory:
+      return static_cast<const FrameSourceFactory*>(description)->Factory();
+
     default:
       throw logic_error("Unsupported frame source type description encountered.");
     }

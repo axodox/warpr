@@ -18,6 +18,7 @@ namespace Warpr
 			"turn:cb51ef701a61be3cdc89466f:BBnGCvnTLaxhVbuf@global.relay.metered.ca:443?transport=tcp"
 		};
 
+		winrt::com_ptr<ID3D11Device> Device;
 		std::shared_ptr<Capture::FrameSourceDescription> FrameSource;
 
 		std::chrono::milliseconds MinimumFrameInterval = std::chrono::milliseconds{ 12 };

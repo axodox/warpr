@@ -64,7 +64,7 @@ namespace Warpr::Capture
         com_ptr<ID3D11Texture2D> texture;
         auto surfaceAccess = frame.Surface().as<IDirect3DDxgiInterfaceAccess>();
         check_hresult(surfaceAccess->GetInterface(IID_PPV_ARGS(texture.put())));
-
+        
         PushFrame(texture);
 
         frame.Close();

@@ -8,7 +8,8 @@ namespace Warpr::Capture
   enum class FrameSourceKind
   {
     Unknown,
-    Window
+    Window,
+    Factory
   };
 
   struct WARP_DRIVE_API FrameSourceDescription

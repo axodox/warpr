@@ -93,6 +93,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Capture\FrameProvider.cpp" />
+    <ClCompile Include="Capture\FrameSourceFactory.cpp" />
     <ClCompile Include="Core\WarpSession.cpp" />
     <ClCompile Include="Encoder\VideoEncoder.cpp" />
     <ClCompile Include="Capture\FrameSource.cpp" />
@@ -120,6 +121,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Capture\FrameProvider.h" />
+    <ClInclude Include="Capture\FrameSourceFactory.h" />
     <ClInclude Include="Core\WarpSession.h" />
     <ClInclude Include="Encoder\VideoEncoder.h" />
     <ClInclude Include="Capture\FrameSource.h" />
