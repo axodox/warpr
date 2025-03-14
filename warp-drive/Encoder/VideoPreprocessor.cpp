@@ -92,8 +92,8 @@ namespace Warpr::Encoder
           .Numerator = 1,
           .Denominator = 1
         },
-        .OutputWidth = targetProperties.Width / 2,
-        .OutputHeight = targetProperties.Height / 2,
+        .OutputWidth = targetProperties.Width,
+        .OutputHeight = targetProperties.Height,
         .Usage = D3D11_VIDEO_USAGE_PLAYBACK_NORMAL
       };
 
@@ -106,8 +106,8 @@ namespace Warpr::Encoder
     //Create backing texture
     {
       D3D11_TEXTURE2D_DESC description{
-        .Width = targetProperties.Width / 2,
-        .Height = targetProperties.Height / 2,
+        .Width = targetProperties.Width,
+        .Height = targetProperties.Height,
         .MipLevels = 1,
         .ArraySize = 1,
         .Format = DXGI_FORMAT_NV12,

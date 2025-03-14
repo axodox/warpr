@@ -103,7 +103,9 @@
     <ClCompile Include="Encoder\VideoPreprocessor.cpp" />
     <ClCompile Include="Graphics\GraphicsDevice.cpp" />
     <ClCompile Include="Infrastructure\RtcLogger.cpp" />
-    <ClCompile Include="Input\InputInjector.cpp" />
+    <ClCompile Include="Input\InputProvider.cpp" />
+    <ClCompile Include="Input\InputSink.cpp" />
+    <ClCompile Include="Input\InputSinkFactory.cpp" />
     <ClCompile Include="Messaging\SignalingMessages.cpp" />
     <ClCompile Include="Messaging\StreamConnection.cpp" />
     <ClCompile Include="Messaging\StreamingMessages.cpp" />
@@ -131,7 +133,10 @@
     <ClInclude Include="Encoder\VideoPreprocessor.h" />
     <ClInclude Include="Graphics\GraphicsDevice.h" />
     <ClInclude Include="Infrastructure\RtcLogger.h" />
-    <ClInclude Include="Input\InputInjector.h" />
+    <ClInclude Include="Input\InputProvider.h" />
+    <ClInclude Include="Input\InputSink.h" />
+    <ClInclude Include="Input\InputSinkFactory.h" />
+    <ClInclude Include="Input\PointerInput.h" />
     <ClInclude Include="Messaging\SignalingMessages.h" />
     <ClInclude Include="Messaging\StreamConnection.h" />
     <ClInclude Include="Messaging\StreamingMessages.h" />

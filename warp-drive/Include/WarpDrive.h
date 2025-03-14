@@ -3,3 +3,4 @@
 #include "Core/WarpDrive.h"
 #include "Capture/WindowSource.h"
 #include "Capture/FrameSourceFactory.h"
+#include "Input/InputSinkFactory.h"

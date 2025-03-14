@@ -3,8 +3,10 @@
 
 using namespace Axodox::Infrastructure;
 using namespace Axodox::Storage;
+using namespace Axodox::Threading;
 using namespace rtc;
 using namespace std;
+using namespace winrt;
 
 namespace Warpr::Messaging
 {
@@ -144,6 +146,11 @@ namespace Warpr::Messaging
   {
     _logger.log(log_severity::information, "Initializing WebRTC connection...");
 
+    auto lifetime = _containerRef.try_lock();
+    co_await resume_background();
+
+    //thread_name_context context{ "webrtc connect" };
+
     //Create configuration
     Configuration config;
     config.iceServers.reserve(_settings->IceServers.size());
@@ -201,8 +208,7 @@ namespace Warpr::Messaging
       OnMessageReceived(WebRtcChannel::LowLatency, data);
       });
 
-    auto lifetime = _containerRef.try_lock();
-    co_await 10s;
+    this_thread::sleep_for(1s);
 
     if (_peerConnection->state() == PeerConnection::State::Connected) co_return;
 

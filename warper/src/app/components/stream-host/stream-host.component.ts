@@ -1,7 +1,7 @@
 import { Component, ElementRef, ViewChild } from '@angular/core';
 import { StreamingService } from '../../services/streaming.service';
 import { EncodedFrame, FrameType } from '../../data/frames';
-import { Point, PointerAction, PointerInputMessage, PointerType } from '../../data/streaming-messages';
+import { PointerInputMessage, PointerStates } from '../../data/streaming-messages';
 
 @Component({
   selector: 'app-stream-host',
@@ -19,6 +19,7 @@ export class StreamHostComponent {
   private _width = 0;
   private _height = 0;
   private _isDecoderInitialized = false;
+  private _pointerStates: PointerStates = {};
 
   public constructor(
     private _streamingService: StreamingService) {
@@ -37,6 +38,8 @@ export class StreamHostComponent {
     this._canvas!.nativeElement.onpointerdown = (event) => this.OnPointerEvent(event);
     this._canvas!.nativeElement.onpointermove = (event) => this.OnPointerEvent(event);
     this._canvas!.nativeElement.onpointerup = (event) => this.OnPointerEvent(event);
+    this._canvas!.nativeElement.onwheel = (event) => this.OnWheelEvent(event);
+    this._canvas!.nativeElement.oncontextmenu = (event) => event.preventDefault();
 
     if (this._renderingContext) {
       console.log("Stream host initialized.");
@@ -48,13 +51,21 @@ export class StreamHostComponent {
     requestAnimationFrame(() => this.RenderFrame());
   }
 
-  private OnPointerEvent(event: PointerEvent) {
+  private OnPointerEvent(event: PointerEvent, wheelDelta = 0) {
     //console.log(event);
+    
+    if (event.type == "pointerdown") this._canvas!.nativeElement.setPointerCapture(event.pointerId);
 
-    let message = new PointerInputMessage(event);
+    let message = new PointerInputMessage(event, this._pointerStates, this._canvas!.nativeElement, wheelDelta);
     //console.log(message);
 
     this._streamingService.SendMessage(message);
+  }
+
+  private OnWheelEvent(event: WheelEvent) {
+    //console.log(event);
+    let pointerEvent: PointerEvent = new PointerEvent(event.type, event);
+    this.OnPointerEvent(pointerEvent, event.deltaY);
   }
 
   private OnFrameReceived(frame: EncodedFrame) {

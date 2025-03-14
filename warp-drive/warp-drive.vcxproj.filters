@@ -57,9 +57,6 @@
     <ClCompile Include="Core\WarpSession.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Input\InputInjector.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Messaging\StreamingMessages.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -70,6 +67,15 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Capture\FrameSourceFactory.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Input\InputSink.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Input\InputSinkFactory.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Input\InputProvider.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -121,9 +127,6 @@
     <ClInclude Include="Core\WarpSession.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Input\InputInjector.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Messaging\StreamingMessages.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -137,6 +140,18 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Capture\FrameSourceFactory.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Input\InputSink.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Input\PointerInput.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Input\InputSinkFactory.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Input\InputProvider.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

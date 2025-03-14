@@ -18,63 +18,100 @@ export enum PointerAction {
   Unknown = "Unknown",
   Pressed = "Pressed",
   Moved = "Moved",
-  Released = "Released"
+  Released = "Released",
+  WheelChanged = "WheelChanged"
 }
+
+export enum PointerFlags {
+  None = 0,
+  LeftButton = 1,
+  MiddleButton = 2,
+  RightButton = 4,
+  Wheel = 8,
+  Captured = 16
+};
+
+export class PointerState {
+  public Buttons = 0;
+}
+
+export type PointerStates = { [key: number]: PointerState };
 
 export class PointerInputMessage {
   public readonly $type = WarprStreamingMessageType.PointerInputMessage;
 
-  public PointerId = -1;
-  public PointerType = PointerType.Unknown;
-  public PointerAction = PointerAction.Unknown;
+  public Id = -1;
+  public Type = PointerType.Unknown;
+  public Action = PointerAction.Unknown;
   public Position: Point = { X: 0, Y: 0 };
+  public Flags = PointerFlags.None;
+  public WheelDelta = 0;
 
-  constructor(event: PointerEvent) {
+  constructor(event: PointerEvent, states: PointerStates, target: HTMLCanvasElement, wheelDelta: number) {
 
-    this.PointerId = event.pointerId;
+    let state = states[event.pointerId];
+    if (state === undefined) {
+      state = new PointerState();
+      states[event.pointerId] = state;
+    }
+
+    this.Id = event.pointerId;
 
     switch (event.pointerType) {
       case "mouse":
-        this.PointerType = PointerType.Mouse;
+        this.Type = PointerType.Mouse;
         break;
       case "pen":
-        this.PointerType = PointerType.Pen;
+        this.Type = PointerType.Pen;
         break;
       case "touch":
-        this.PointerType = PointerType.Touch;
+        this.Type = PointerType.Touch;
+        break;
+      default:
+        this.Type = PointerType.Mouse;
         break;
     }
 
     switch (event.type) {
       case "pointerdown":
-        this.PointerAction = PointerAction.Pressed;
+        this.Action = PointerAction.Pressed;
+        state.Buttons |= 1 << event.button
         break;
       case "pointerup":
-        this.PointerAction = PointerAction.Released;
+        this.Action = PointerAction.Released;
+        state.Buttons &= ~(1 << event.button)
         break;
       case "pointermove":
-        this.PointerAction = PointerAction.Released;
+        this.Action = PointerAction.Moved;
+        break;
+      case "wheel":
+        this.Action = PointerAction.WheelChanged;
         break;
     }
 
-    this.Position = PointerInputMessage.GetRemotePosition(event);
+    if (state.Buttons & 1) this.Flags |= PointerFlags.LeftButton;
+    if (state.Buttons & 2) this.Flags |= PointerFlags.MiddleButton;
+    if (state.Buttons & 4) this.Flags |= PointerFlags.RightButton;
+    if (wheelDelta != 0) this.Flags |= PointerFlags.Wheel;
+    if (target.hasPointerCapture(event.pointerId)) this.Flags |= PointerFlags.Captured;
+    
+    this.Position = PointerInputMessage.GetRemotePosition(event, target);
+    this.WheelDelta = -wheelDelta;
   }
 
-  private static GetRemotePosition(event: PointerEvent): Point {
-    let canvas = event.target as HTMLCanvasElement;
-
+  private static GetRemotePosition(event: PointerEvent, target: HTMLCanvasElement): Point {
     let offsetX = 0;
     let offsetY = 0;
     let scale = 1;
-    let canvasAspectRatio = canvas.clientWidth / canvas.clientHeight;
-    let videoAspectRatio = canvas.width / canvas.height;
+    let canvasAspectRatio = target.clientWidth / target.clientHeight;
+    let videoAspectRatio = target.width / target.height;
 
     if (videoAspectRatio > canvasAspectRatio) {
-      offsetY = 0.5 * (canvas.clientHeight - canvas.clientWidth / videoAspectRatio);
-      scale = canvas.width / canvas.clientWidth;
+      offsetY = 0.5 * (target.clientHeight - target.clientWidth / videoAspectRatio);
+      scale = target.width / target.clientWidth;
     } else {
-      offsetX = 0.5 * (canvas.clientWidth - canvas.clientHeight * videoAspectRatio);
-      scale = canvas.height / canvas.clientHeight;
+      offsetX = 0.5 * (target.clientWidth - target.clientHeight * videoAspectRatio);
+      scale = target.height / target.clientHeight;
     }
 
     return {

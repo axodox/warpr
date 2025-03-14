@@ -1,6 +1,7 @@
 #pragma once
 #include "warpr_includes.h"
 #include "Capture/FrameSource.h"
+#include "Input/InputSink.h"
 
 namespace Warpr
 {
@@ -20,7 +21,8 @@ namespace Warpr
 
 		winrt::com_ptr<ID3D11Device> Device;
 		std::shared_ptr<Capture::FrameSourceDescription> FrameSource;
+		std::shared_ptr<Input::InputSinkDescription> InputSink;
 
-		std::chrono::milliseconds MinimumFrameInterval = std::chrono::milliseconds{ 12 };
+		std::chrono::milliseconds MinimumFrameInterval = std::chrono::milliseconds{ 0 };
 	};
 }

@@ -8,8 +8,8 @@ namespace Warpr::Capture
     virtual FrameSourceKind Type() const override;
 
     FrameSourceFactory() = default;
-    FrameSourceFactory(std::function<std::unique_ptr<Warpr::Capture::FrameSource>()>&& factory);
+    FrameSourceFactory(std::function<std::unique_ptr<FrameSource>()>&& factory);
 
-    std::function<std::unique_ptr<Warpr::Capture::FrameSource>()> Factory;
+    std::function<std::unique_ptr<FrameSource>()> Factory;
   };
 }

@@ -69,7 +69,7 @@ namespace Warpr::Encoder
 
   EncodedFrame VideoEncoder::EncodeFrame(const Capture::Frame& frame, bool forceIdrFrame)
   {
-    Stopwatch watch{ "Frame encode" };
+    //Stopwatch watch{ "Frame encode" };
 
     //Ensure session
     auto encoderProperties = GetEncoderProperties(frame);

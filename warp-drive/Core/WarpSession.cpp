@@ -5,6 +5,7 @@ using namespace Axodox::Infrastructure;
 using namespace Axodox::Storage;
 using namespace Warpr::Capture;
 using namespace Warpr::Encoder;
+using namespace Warpr::Input;
 using namespace Warpr::Messaging;
 using namespace std;
 using namespace std::chrono;
@@ -14,6 +15,7 @@ namespace Warpr::Core
   WarpSession::WarpSession(Axodox::Infrastructure::dependency_container* container) :
     _configuration(container->resolve<WarpConfiguration>()),
     _frameProvider(container->resolve<FrameProvider>()),
+    _inputProvider(container->resolve<InputProvider>()),
     _videoPreprocessor(container->resolve<VideoPreprocessor>()),
     _videoEncoder(container->resolve<VideoEncoder>()),
     _webRtcClient(container->resolve<WebRtcClient>()),
@@ -62,7 +64,7 @@ namespace Warpr::Core
 
   void WarpSession::SendFrame(const Encoder::EncodedFrame& frame)
   {
-    Stopwatch watch{"Send message"};
+    //Stopwatch watch{"Send message"};
 
     memory_stream message;
     message.write(frame.Type);

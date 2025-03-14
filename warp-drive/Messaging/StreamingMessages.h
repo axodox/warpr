@@ -1,5 +1,6 @@
 #pragma once
 #include "warpr_includes.h"
+#include "Input/PointerInput.h"
 
 namespace Warpr::Messaging
 {
@@ -23,29 +24,19 @@ namespace Warpr::Messaging
     Point();
   };
 
-  named_enum(PointerType,
-    Unknown,
-    Mouse,
-    Pen,
-    Touch
-  );
-
-  named_enum(PointerAction,
-    Unknown,
-    Pressed,
-    Moved,
-    Released
-  );
-
   struct PointerInputMessage : public WarprStreamingMessage
   {
     Axodox::Json::json_property<int> PointerId;
-    Axodox::Json::json_property<PointerType> PointerType;
-    Axodox::Json::json_property<PointerAction> PointerAction;
+    Axodox::Json::json_property<Input::PointerType> PointerType;
+    Axodox::Json::json_property<Input::PointerAction> PointerAction;
     Axodox::Json::json_property<Point> Position;
+    Axodox::Json::json_property<Input::PointerFlags> Flags;
+    Axodox::Json::json_property<int> WheelDelta;
 
     PointerInputMessage();
 
     virtual WarprStreamingMessageType Type() const override;
+
+    Input::PointerInput ToInput() const;
   };
 }
