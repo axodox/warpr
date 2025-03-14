@@ -15,7 +15,7 @@
     <owners>axodox</owners>
 
     <!-- License and project URLs provide links for the gallery -->
-    <license type="expression">MIT</license>
+    <license type="expression">MPL-2.0</license>
     <repository type="git" url="https://github.com/axodox/warpr" branch="main"/>
 
     <!-- The icon is used in Visual Studio's package manager UI -->
