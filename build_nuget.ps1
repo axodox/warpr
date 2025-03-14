@@ -42,7 +42,7 @@ Write-Host 'Patching nuspec...' -ForegroundColor Magenta
 $nuspec = [xml](Get-Content "$PSScriptRoot\warp-drive\Warpr.WarpDrive.nuspec")
 
 $nuspec.package.metadata.version = if ($null -ne $env:APPVEYOR_BUILD_VERSION) { $env:APPVEYOR_BUILD_VERSION } else { "1.0.0.0" }
-$nuspec.package.metadata.repository.branch = if ($null -ne $env:APPVEYOR_REPO_BRANCH) { $env:APPVEYOR_REPO_BRANCH } else { "main" }
+$nuspec.package.metadata.repository.branch = if ($null -ne $env:APPVEYOR_REPO_BRANCH) { $env:APPVEYOR_REPO_BRANCH } else { "master" }
 $commit = if ($null -ne $env:APPVEYOR_REPO_COMMIT) { $env:APPVEYOR_REPO_COMMIT } else { $null }
 if ($null -ne $commit) {
   $nuspec.package.metadata.repository.SetAttribute("commit", $commit)
