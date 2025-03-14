@@ -115,6 +115,8 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
+    <None Include="Warpr.WarpDrive.nuspec" />
+    <None Include="Warpr.WarpDrive.targets" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Capture\FrameProvider.h" />
