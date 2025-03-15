@@ -1,6 +1,7 @@
 #include "warpr_includes.h"
 #include "VideoPreprocessor.h"
 #include "Graphics/GraphicsDevice.h"
+#include "Core/WarpConfiguration.h"
 
 using namespace Axodox::Infrastructure;
 using namespace Warpr::Graphics;
@@ -11,6 +12,9 @@ namespace Warpr::Encoder
   VideoPreprocessor::VideoPreprocessor(Axodox::Infrastructure::dependency_container* container)
   {
     _logger.log(log_severity::information, "Initializing...");
+
+    auto configuration = container->resolve<WarpConfiguration>();
+    _resolutionScale = configuration->ResolutionScale;
 
     auto device = container->resolve<GraphicsDevice>();
     _device = device->Device();
@@ -78,6 +82,10 @@ namespace Warpr::Encoder
 
     _logger.log(log_severity::information, "Allocating resources...");
 
+    //Calculate output resolution
+    auto width = uint32_t(targetProperties.Width * _resolutionScale);
+    auto height = uint32_t(targetProperties.Height * _resolutionScale);
+
     //Create video processor enumerator
     {
       D3D11_VIDEO_PROCESSOR_CONTENT_DESC description{
@@ -92,8 +100,8 @@ namespace Warpr::Encoder
           .Numerator = 1,
           .Denominator = 1
         },
-        .OutputWidth = targetProperties.Width,
-        .OutputHeight = targetProperties.Height,
+        .OutputWidth = width,
+        .OutputHeight = height,
         .Usage = D3D11_VIDEO_USAGE_PLAYBACK_NORMAL
       };
 
@@ -106,8 +114,8 @@ namespace Warpr::Encoder
     //Create backing texture
     {
       D3D11_TEXTURE2D_DESC description{
-        .Width = targetProperties.Width,
-        .Height = targetProperties.Height,
+        .Width = width,
+        .Height = height,
         .MipLevels = 1,
         .ArraySize = 1,
         .Format = DXGI_FORMAT_NV12,

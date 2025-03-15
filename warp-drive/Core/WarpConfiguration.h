@@ -22,6 +22,7 @@ namespace Warpr
 		winrt::com_ptr<ID3D11Device> Device;
 		std::shared_ptr<Capture::FrameSourceDescription> FrameSource;
 		std::shared_ptr<Input::InputSinkDescription> InputSink;
+		float ResolutionScale = 1.f;
 
 		std::chrono::milliseconds MinimumFrameInterval = std::chrono::milliseconds{ 0 };
 	};

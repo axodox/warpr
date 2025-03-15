@@ -29,6 +29,8 @@ namespace Warpr::Encoder
     winrt::com_ptr<ID3D11Texture2D> _outputTexture;
     winrt::com_ptr<ID3D11VideoProcessorOutputView> _outputView;
 
+    float _resolutionScale = 1.f;
+
     std::map<ID3D11Texture2D*, winrt::com_ptr<ID3D11VideoProcessorInputView>> _inputViews;
 
     TargetProperties _targetProperties{};

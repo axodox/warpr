@@ -22,5 +22,11 @@
   <ItemGroup>
     <None Include="packages.config" />
     <None Include="$(ProjectDir)..\warp-drive\bin\$(Platform)\$(Configuration)\*.dll" />
+    <None Include="$(ProjectDir)..\warp-drive\bin\$(Platform)\$(Configuration)\*.dll" />
+    <None Include="$(ProjectDir)..\warp-drive\bin\$(Platform)\$(Configuration)\*.dll" />
+    <None Include="$(ProjectDir)..\warp-drive\bin\$(Platform)\$(Configuration)\*.dll" />
+    <None Include="$(ProjectDir)..\warp-drive\bin\$(Platform)\$(Configuration)\*.dll" />
+    <None Include="$(ProjectDir)..\warp-drive\bin\$(Platform)\$(Configuration)\*.dll" />
+    <None Include="$(ProjectDir)..\warp-drive\bin\$(Platform)\$(Configuration)\*.dll" />
   </ItemGroup>
 </Project>
