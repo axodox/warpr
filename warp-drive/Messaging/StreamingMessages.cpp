@@ -7,7 +7,8 @@ using namespace Warpr::Input;
 namespace Warpr::Messaging
 {
   Axodox::Infrastructure::type_registry<WarprStreamingMessage> WarprStreamingMessage::derived_types = type_registry<WarprStreamingMessage>::create<
-    PointerInputMessage>();
+    PointerInputMessage,
+    ResizeSurfaceMessage>();
 
   Point::Point() :
     X(this, "X"),
@@ -39,5 +40,15 @@ namespace Warpr::Messaging
       .Flags = *Flags,
       .WheelDelta = *WheelDelta
     };
+  }
+
+  ResizeSurfaceMessage::ResizeSurfaceMessage() :
+    Width(this, "Width"),
+    Height(this, "Height")
+  { }
+
+  WarprStreamingMessageType ResizeSurfaceMessage::Type() const
+  {
+    return WarprStreamingMessageType::ResizeSurfaceMessage;
   }
 }

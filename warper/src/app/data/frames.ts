@@ -23,3 +23,15 @@ export class EncodedFrame {
     this.Bytes = stream.ReadBuffer();
   }
 }
+
+export class Size {
+  public constructor(
+    public Width: number,
+    public Height: number) { }
+
+  public static Empty: Size = { Width: 0, Height: 0 };
+
+  public static AreEqual(a: Size, b: Size) {
+    return a.Width === b.Width && a.Height === b.Height;
+  }
+}

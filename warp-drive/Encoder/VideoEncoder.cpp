@@ -45,21 +45,7 @@ namespace Warpr::Encoder
 
     _logger.log(log_severity::information, "NVEnc API ready.");
 
-    //Open encode session
-    {
-      _logger.log(log_severity::information, "Opening encode session...");
-      auto device = container->resolve<GraphicsDevice>()->Device();
-
-      NV_ENC_OPEN_ENCODE_SESSION_EX_PARAMS encodeSessionExParams = {
-        .version = NV_ENC_OPEN_ENCODE_SESSION_EX_PARAMS_VER,
-        .deviceType = NV_ENC_DEVICE_TYPE_DIRECTX,
-        .device = device.get(),
-        .apiVersion = NVENCAPI_VERSION
-      };
-      check_nvenc(_nvenc.nvEncOpenEncodeSessionEx(&encodeSessionExParams, &_encoder));
-      
-      _logger.log(log_severity::information, "Encode session ready.");
-    }
+    _device = container->resolve<GraphicsDevice>()->Device();
   }
 
   VideoEncoder::~VideoEncoder()
@@ -160,7 +146,7 @@ namespace Warpr::Encoder
   {
     D3D11_TEXTURE2D_DESC description;
     frame->GetDesc(&description);
-    
+
     return {
       .Width = description.Width,
       .Height = description.Height
@@ -173,6 +159,23 @@ namespace Warpr::Encoder
     _encoderProperties = encoderProperties;
 
     _logger.log(log_severity::information, "Encoder property change detected.");
+
+    //Release resources
+    ReleaseResources();
+
+    //Open encode session
+    {
+      _logger.log(log_severity::information, "Opening encode session...");
+      NV_ENC_OPEN_ENCODE_SESSION_EX_PARAMS encodeSessionExParams = {
+        .version = NV_ENC_OPEN_ENCODE_SESSION_EX_PARAMS_VER,
+        .deviceType = NV_ENC_DEVICE_TYPE_DIRECTX,
+        .device = _device.get(),
+        .apiVersion = NVENCAPI_VERSION
+      };
+      check_nvenc(_nvenc.nvEncOpenEncodeSessionEx(&encodeSessionExParams, &_encoder));
+
+      _logger.log(log_severity::information, "Encode session ready.");
+    }
 
     //Initialize encoder
     {
@@ -284,7 +287,7 @@ namespace Warpr::Encoder
       .reserved1 = {},
       .reserved2 = {}
     };
-    
+
     check_nvenc(_nvenc.nvEncRegisterResource(_encoder, &description));
     _inputResource = description.registeredResource;
     _logger.log(log_severity::information, "Input resource registered.");
@@ -293,9 +296,25 @@ namespace Warpr::Encoder
   void VideoEncoder::ReleaseResources()
   {
     _logger.log(log_severity::information, "Releasing resources...");
-    if (_inputResource) check_nvenc(_nvenc.nvEncUnregisterResource(_encoder, _inputResource));
-    if (_outputBuffer) check_nvenc(_nvenc.nvEncDestroyBitstreamBuffer(_encoder, _outputBuffer));
-    if (_encoder) check_nvenc(_nvenc.nvEncDestroyEncoder(_encoder));
+
+    if (_inputResource)
+    {
+      check_nvenc(_nvenc.nvEncUnregisterResource(_encoder, _inputResource));
+      _inputResource = nullptr;
+    }
+
+    if (_outputBuffer)
+    {
+      check_nvenc(_nvenc.nvEncDestroyBitstreamBuffer(_encoder, _outputBuffer));
+      _outputBuffer = nullptr;
+    }
+
+    if (_encoder)
+    {
+      check_nvenc(_nvenc.nvEncDestroyEncoder(_encoder));
+      _encoder = nullptr;
+    }
+
     _logger.log(log_severity::information, "Resources released.");
   }
 }

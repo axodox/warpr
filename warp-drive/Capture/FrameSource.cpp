@@ -12,6 +12,11 @@ namespace Warpr::Capture
     FrameArrived(_events)
   { }
 
+  void FrameSource::Resize(uint32_t width, uint32_t height)
+  {
+
+  }
+
   std::unique_ptr<FrameSource> FrameSource::Create(Axodox::Infrastructure::dependency_container* container, const FrameSourceDescription* description)
   {
     if (!description)

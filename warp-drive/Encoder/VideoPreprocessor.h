@@ -38,6 +38,6 @@ namespace Warpr::Encoder
     TargetProperties GetTargetProperties(Capture::Frame& frame);
     void EnsureTargets(const TargetProperties& targetProperties);
 
-
+    static uint32_t MakeEven(uint32_t value);
   };
 }

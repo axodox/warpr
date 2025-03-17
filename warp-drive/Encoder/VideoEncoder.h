@@ -38,6 +38,8 @@ namespace Warpr::Encoder
     EncodedFrame EncodeFrame(const Capture::Frame& frame, bool forceIdrFrame = false);
 
   private:
+    winrt::com_ptr<ID3D11Device> _device;
+
     NV_ENCODE_API_FUNCTION_LIST _nvenc;
     void* _encoder = nullptr;
     void* _frameResource = nullptr;

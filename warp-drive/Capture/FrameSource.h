@@ -29,6 +29,8 @@ namespace Warpr::Capture
     FrameSource();
     virtual ~FrameSource() = default;
 
+    virtual void Resize(uint32_t width, uint32_t height);
+
     static std::unique_ptr<FrameSource> Create(Axodox::Infrastructure::dependency_container* container, const FrameSourceDescription* description);
 
   protected:

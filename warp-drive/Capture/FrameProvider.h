@@ -1,6 +1,7 @@
 #pragma once
 #include "warpr_includes.h"
 #include "FrameSource.h"
+#include "Messaging/StreamConnection.h"
 
 namespace Warpr::Capture
 {
@@ -17,8 +18,13 @@ namespace Warpr::Capture
     FrameSource* Source() const;
 
   private:
+    std::shared_ptr<Messaging::StreamConnection> _connection;
     std::unique_ptr<FrameSource> _source;
 
+    Axodox::Infrastructure::event_subscription _messageReceivedSubscription;
+
     void OnFrameArrived(FrameSource* sender, const Frame& eventArgs);
+
+    void OnMessageReceived(Messaging::StreamConnection* sender, const Messaging::WarprStreamingMessage* eventArgs);
   };
 }

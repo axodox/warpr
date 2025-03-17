@@ -1,7 +1,7 @@
 import { Component, ElementRef, ViewChild } from '@angular/core';
 import { StreamingService } from '../../services/streaming.service';
-import { EncodedFrame, FrameType } from '../../data/frames';
-import { PointerInputMessage, PointerStates } from '../../data/streaming-messages';
+import { EncodedFrame, FrameType, Size } from '../../data/frames';
+import { PointerInputMessage, PointerStates, ResizeSurfaceMessage } from '../../data/streaming-messages';
 
 @Component({
   selector: 'app-stream-host',
@@ -16,11 +16,11 @@ export class StreamHostComponent {
 
   private _decoder: VideoDecoder;
   private _framePending?: VideoFrame;
-  private _width = 0;
-  private _height = 0;
+  private _videoSize = Size.Empty;
+  private _displaySize = Size.Empty;
   private _isDecoderInitialized = false;
   private _pointerStates: PointerStates = {};
-
+  
   public constructor(
     private _streamingService: StreamingService) {
     this._streamingService.FrameReceived.Subscribe((sender, eventArgs) => this.OnFrameReceived(eventArgs));
@@ -34,12 +34,14 @@ export class StreamHostComponent {
   private async ngAfterViewInit() {
 
     console.log("Initializing stream host...");
-    this._renderingContext = this._canvas!.nativeElement.getContext("2d")!;
-    this._canvas!.nativeElement.onpointerdown = (event) => this.OnPointerEvent(event);
-    this._canvas!.nativeElement.onpointermove = (event) => this.OnPointerEvent(event);
-    this._canvas!.nativeElement.onpointerup = (event) => this.OnPointerEvent(event);
-    this._canvas!.nativeElement.onwheel = (event) => this.OnWheelEvent(event);
-    this._canvas!.nativeElement.oncontextmenu = (event) => event.preventDefault();
+
+    let canvas = this._canvas!.nativeElement;
+    this._renderingContext = canvas.getContext("2d")!;
+    canvas.onpointerdown = (event) => this.OnPointerEvent(event);
+    canvas.onpointermove = (event) => this.OnPointerEvent(event);
+    canvas.onpointerup = (event) => this.OnPointerEvent(event);
+    canvas.onwheel = (event) => this.OnWheelEvent(event);
+    canvas.oncontextmenu = (event) => event.preventDefault();
 
     if (this._renderingContext) {
       console.log("Stream host initialized.");
@@ -76,7 +78,9 @@ export class StreamHostComponent {
     });
 
     //Initialize decoder
-    if (frame.Width != this._width || frame.Height != this._height) {
+    let frameSize = new Size(frame.Width, frame.Height);
+
+    if (!Size.AreEqual(frameSize, this._videoSize)) {
       console.log("Configuring decoder...");
       this._decoder.configure({
         codec: "hvc1.1.6.L93.B0",
@@ -87,8 +91,7 @@ export class StreamHostComponent {
       });
       console.log("Decoder configured.");
 
-      this._width = frame.Width;
-      this._height = frame.Height;
+      this._videoSize = frameSize;
     }
 
     //Decode frame
@@ -111,13 +114,28 @@ export class StreamHostComponent {
 
     if (frame) {
 
-      this._canvas!.nativeElement.width = frame.displayWidth;
-      this._canvas!.nativeElement.height = frame.displayHeight;
+      //Set canvas resolution to video resolution
+      let canvas = this._canvas!.nativeElement;
+      canvas.width = frame.displayWidth;
+      canvas.height = frame.displayHeight;
 
+      //Check for control size change
+      let canvasRect = canvas.getBoundingClientRect();
+      let canvasSize = new Size(Math.round(canvasRect.width * window.devicePixelRatio), Math.round(canvasRect.height * window.devicePixelRatio));
+      if (!Size.AreEqual(canvasSize, this._displaySize)) {
+        this._displaySize = canvasSize;
+
+        console.log(`Resized to ${canvasSize.Width} x ${canvasSize.Height}`);
+        let message = new ResizeSurfaceMessage(canvasSize.Width, canvasSize.Height);
+        this._streamingService.SendMessage(message);
+      }
+
+      //Draw new frame
       if (this._renderingContext) {
         this._renderingContext.drawImage(frame, 0, 0, frame.displayWidth, frame.displayHeight);
       }
 
+      //Release memory
       frame.close();
     }
 

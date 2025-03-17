@@ -83,8 +83,8 @@ namespace Warpr::Encoder
     _logger.log(log_severity::information, "Allocating resources...");
 
     //Calculate output resolution
-    auto width = uint32_t(targetProperties.Width * _resolutionScale);
-    auto height = uint32_t(targetProperties.Height * _resolutionScale);
+    auto width = MakeEven(uint32_t(targetProperties.Width * _resolutionScale));
+    auto height = MakeEven(uint32_t(targetProperties.Height * _resolutionScale));
 
     //Create video processor enumerator
     {
@@ -145,5 +145,10 @@ namespace Warpr::Encoder
     }
 
     _logger.log(log_severity::information, "Resources allocated.");
+  }
+
+  uint32_t VideoPreprocessor::MakeEven(uint32_t value)
+  {
+    return value % 2 == 0 ? value : value + 1;
   }
 }

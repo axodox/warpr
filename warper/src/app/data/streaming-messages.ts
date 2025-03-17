@@ -1,5 +1,6 @@
 export enum WarprStreamingMessageType {
   PointerInputMessage = "PointerInputMessage",
+  ResizeSurfaceMessage = "ResizeSurfaceMessage"
 }
 
 export type Point = {
@@ -121,5 +122,15 @@ export class PointerInputMessage {
   }
 }
 
-export type WarprSignalingMessage =
-  PointerInputMessage;
+export class ResizeSurfaceMessage {
+  public readonly $type = WarprStreamingMessageType.ResizeSurfaceMessage;
+
+  constructor(
+    public Width: number,
+    public Height: number
+  ) { }
+}
+
+export type WarprStreamingMessage =
+  PointerInputMessage |
+  ResizeSurfaceMessage;

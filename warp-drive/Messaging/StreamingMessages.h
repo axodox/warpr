@@ -6,7 +6,8 @@ namespace Warpr::Messaging
 {
   named_enum(WarprStreamingMessageType,
     Unknown,
-    PointerInputMessage
+    PointerInputMessage,
+    ResizeSurfaceMessage
   );
 
   struct WarprStreamingMessage : public Axodox::Json::json_object_base
@@ -38,5 +39,15 @@ namespace Warpr::Messaging
     virtual WarprStreamingMessageType Type() const override;
 
     Input::PointerInput ToInput() const;
+  };
+
+  struct ResizeSurfaceMessage : public WarprStreamingMessage
+  {
+    Axodox::Json::json_property<uint32_t> Width;
+    Axodox::Json::json_property<uint32_t> Height;
+
+    ResizeSurfaceMessage();
+
+    virtual WarprStreamingMessageType Type() const override;
   };
 }
