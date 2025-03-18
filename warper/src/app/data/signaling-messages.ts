@@ -31,6 +31,7 @@ export class StreamingSourcesMessage {
 
 export type WarprSignalingMessage =
   ConnectionRequest |
+  PairingCompleteMessage |
   PeerConnectionDescriptionMessage |
   PeerConnectionCandidateMessage |
   StreamingSourcesMessage;

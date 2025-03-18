@@ -149,7 +149,7 @@ namespace Warpr::Messaging
     auto lifetime = _containerRef.try_lock();
     co_await resume_background();
 
-    //thread_name_context context{ "webrtc connect" };
+    thread_name_context context{ "* webrtc connect" };
 
     //Create configuration
     Configuration config;

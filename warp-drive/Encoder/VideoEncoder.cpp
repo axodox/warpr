@@ -299,19 +299,19 @@ namespace Warpr::Encoder
 
     if (_inputResource)
     {
-      check_nvenc(_nvenc.nvEncUnregisterResource(_encoder, _inputResource));
+      _nvenc.nvEncUnregisterResource(_encoder, _inputResource);
       _inputResource = nullptr;
     }
 
     if (_outputBuffer)
     {
-      check_nvenc(_nvenc.nvEncDestroyBitstreamBuffer(_encoder, _outputBuffer));
+      _nvenc.nvEncDestroyBitstreamBuffer(_encoder, _outputBuffer);
       _outputBuffer = nullptr;
     }
 
     if (_encoder)
     {
-      check_nvenc(_nvenc.nvEncDestroyEncoder(_encoder));
+      _nvenc.nvEncDestroyEncoder(_encoder);
       _encoder = nullptr;
     }
 

@@ -5,6 +5,7 @@
 
 using namespace Axodox::Infrastructure;
 using namespace Warpr::Graphics;
+using namespace std;
 using namespace winrt;
 
 namespace Warpr::Encoder
@@ -83,8 +84,8 @@ namespace Warpr::Encoder
     _logger.log(log_severity::information, "Allocating resources...");
 
     //Calculate output resolution
-    auto width = MakeEven(uint32_t(targetProperties.Width * _resolutionScale));
-    auto height = MakeEven(uint32_t(targetProperties.Height * _resolutionScale));
+    auto width = max(256u, MakeEven(uint32_t(targetProperties.Width * _resolutionScale)));
+    auto height = max(256u, MakeEven(uint32_t(targetProperties.Height * _resolutionScale)));
 
     //Create video processor enumerator
     {

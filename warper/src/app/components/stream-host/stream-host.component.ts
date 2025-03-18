@@ -10,6 +10,9 @@ import { PointerInputMessage, PointerStates, ResizeSurfaceMessage } from '../../
 })
 export class StreamHostComponent {
 
+  @ViewChild("root")
+  private _root?: ElementRef<HTMLDivElement>;
+
   @ViewChild("renderTarget")
   private _canvas?: ElementRef<HTMLCanvasElement>;
   private _renderingContext: CanvasRenderingContext2D | null = null;
@@ -20,9 +23,14 @@ export class StreamHostComponent {
   private _displaySize = Size.Empty;
   private _isDecoderInitialized = false;
   private _pointerStates: PointerStates = {};
-  
+
+  public get IsFullScreenAvailable(): boolean {
+    return document.fullscreenEnabled;
+  }
+
   public constructor(
     private _streamingService: StreamingService) {
+    this._streamingService.Connected.Subscribe((sender, eventArgs) => this.OnConnected());
     this._streamingService.FrameReceived.Subscribe((sender, eventArgs) => this.OnFrameReceived(eventArgs));
 
     this._decoder = new VideoDecoder({
@@ -55,7 +63,8 @@ export class StreamHostComponent {
 
   private OnPointerEvent(event: PointerEvent, wheelDelta = 0) {
     //console.log(event);
-    
+    event.preventDefault();
+
     if (event.type == "pointerdown") this._canvas!.nativeElement.setPointerCapture(event.pointerId);
 
     let message = new PointerInputMessage(event, this._pointerStates, this._canvas!.nativeElement, wheelDelta);
@@ -66,8 +75,14 @@ export class StreamHostComponent {
 
   private OnWheelEvent(event: WheelEvent) {
     //console.log(event);
+    event.preventDefault();
+
     let pointerEvent: PointerEvent = new PointerEvent(event.type, event);
     this.OnPointerEvent(pointerEvent, event.deltaY);
+  }
+
+  private OnConnected() {
+    this._displaySize = Size.Empty;
   }
 
   private OnFrameReceived(frame: EncodedFrame) {
@@ -90,6 +105,7 @@ export class StreamHostComponent {
         optimizeForLatency: true
       });
       console.log("Decoder configured.");
+      console.log(`Resolution is ${frame.Width} x ${frame.Height}.`);
 
       this._videoSize = frameSize;
     }
@@ -138,6 +154,14 @@ export class StreamHostComponent {
       //Release memory
       frame.close();
     }
+  }
 
+  public ToggleFullScreen() {
+    if (document.fullscreenElement === this._root?.nativeElement) {
+      document.exitFullscreen();
+    }
+    else {
+      this._root?.nativeElement.requestFullscreen();
+    }
   }
 }

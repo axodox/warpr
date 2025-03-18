@@ -11,65 +11,78 @@ import { MessageAssembler } from '../insfrastructure/message-assembler';
 })
 export class StreamingService {
 
-  private _peerConnection: RTCPeerConnection;
+  private _peerConnection?: RTCPeerConnection;
   private _reliableConnection?: RTCDataChannel;
   private _lowLatencyConnection?: RTCDataChannel;
-  private _messageBuilder = new MessageAssembler();
+  private _messageBuilder? : MessageAssembler;
 
   private readonly _events = new EventOwner();
   public readonly FrameReceived = new EventPublisher<StreamingService, EncodedFrame>(this._events);
+  public readonly Connected = new EventPublisher<StreamingService, any>(this._events);
+
+  private static _config: RTCConfiguration = {
+    iceServers: [
+      { urls: "stun:stun.l.google.com:19302" },
+      { urls: "stun:stun.relay.metered.ca:80" },
+      {
+        urls: "turn:global.relay.metered.ca:80",
+        username: "cb51ef701a61be3cdc89466f",
+        credential: "BBnGCvnTLaxhVbuf"
+      },
+      {
+        urls: "turn:global.relay.metered.ca:80?transport=tcp",
+        username: "cb51ef701a61be3cdc89466f",
+        credential: "BBnGCvnTLaxhVbuf"
+      },
+      {
+        urls: "turn:global.relay.metered.ca:443",
+        username: "cb51ef701a61be3cdc89466f",
+        credential: "BBnGCvnTLaxhVbuf"
+      },
+      {
+        urls: "turns:global.relay.metered.ca:443?transport=tcp",
+        username: "cb51ef701a61be3cdc89466f",
+        credential: "BBnGCvnTLaxhVbuf"
+      }
+    ]
+  };
 
   constructor(
     private _messagingService: MessagingService) {
 
     _messagingService.MessageReceived.Subscribe((sender: IMessagingClient<WarprSignalingMessage>, message: WarprSignalingMessage) => this.OnMessageReceived(sender, message));
 
-    let config: RTCConfiguration = {
-      iceServers: [
-        { urls: "stun:stun.l.google.com:19302" },
-        { urls: "stun:stun.relay.metered.ca:80" },
-        {
-          urls: "turn:global.relay.metered.ca:80",
-          username: "cb51ef701a61be3cdc89466f",
-          credential: "BBnGCvnTLaxhVbuf"
-        },
-        {
-          urls: "turn:global.relay.metered.ca:80?transport=tcp",
-          username: "cb51ef701a61be3cdc89466f",
-          credential: "BBnGCvnTLaxhVbuf"
-        },
-        {
-          urls: "turn:global.relay.metered.ca:443",
-          username: "cb51ef701a61be3cdc89466f",
-          credential: "BBnGCvnTLaxhVbuf"
-        },
-        {
-          urls: "turns:global.relay.metered.ca:443?transport=tcp",
-          username: "cb51ef701a61be3cdc89466f",
-          credential: "BBnGCvnTLaxhVbuf"
-        }
-      ]
-    };
+    this.Reconnect();
+  }
 
-    this._peerConnection = new RTCPeerConnection(config);
+  private Reconnect() {
+    this._reliableConnection?.close();
+    this._lowLatencyConnection?.close();
+    this._peerConnection?.close();
+    this._messageBuilder = new MessageAssembler();
+
+    this._peerConnection = new RTCPeerConnection(StreamingService._config);
     this._peerConnection.onicecandidate = (event) => this.OnIceCandidateAdded(event.candidate?.candidate);
     this._peerConnection.ondatachannel = (event) => this.OnDataChannel(event);
     this._peerConnection.onconnectionstatechange = (event) => this.OnConnectionStateChanged();
   }
-
+  
   public SendMessage(message: any) {
     let json = JSON.stringify(message);
     this._reliableConnection?.send(json);
   }
 
   private OnConnectionStateChanged() {
-    console.log("WebRTC: " + this._peerConnection.connectionState);
+    console.log("WebRTC: " + this._peerConnection?.connectionState);
   }
 
   private OnDataChannel(event: RTCDataChannelEvent) {
+    console.log(`WebRTC data channel ${event.channel.label} connected.`);
+
     switch (event.channel.label) {
       case "reliable":
         this._reliableConnection = event.channel;
+        this._events.Raise(this.Connected, this, null);
         break;
       case "low_latency":
         this._lowLatencyConnection = event.channel;
@@ -84,7 +97,7 @@ export class StreamingService {
 
   private OnLowLatencyMessage(event: MessageEvent<any>) {
 
-    let message = this._messageBuilder.PushMessage(event.data as ArrayBuffer);
+    let message = this._messageBuilder?.PushMessage(event.data as ArrayBuffer);
     if (!message) return;
 
     let now = performance.now();
@@ -112,7 +125,12 @@ export class StreamingService {
 
   private async OnMessageReceived(sender: IMessagingClient<WarprSignalingMessage>, message: WarprSignalingMessage) {
 
+    if (!this._peerConnection) return;
+
     switch (message.$type) {
+      case WarprSignalingMessageType.PairingCompleteMessage:
+        this.Reconnect();
+        break;
       case WarprSignalingMessageType.PeerConnectionDescriptionMessage:
         await this._peerConnection.setRemoteDescription({ type: "offer", sdp: message.Description });
         let answer = await this._peerConnection.createAnswer();
