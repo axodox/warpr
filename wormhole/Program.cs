@@ -1,5 +1,3 @@
-using Microsoft.AspNetCore.Cors.Infrastructure;
-using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.AspNetCore.HttpOverrides;
 using System.Reflection;
 using Warpr.Gateway.Session;
