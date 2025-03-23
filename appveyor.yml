@@ -3,8 +3,13 @@ branches:
   only:
   - main
 image: Visual Studio 2022
+environment:
+  NPM_TOKEN:
+    secure: yLnaj+JlQXaOkOR5dBvXnxPcZCeyphHMaS2c4jI0DbgYcvbrzmhAuQTNLYQDdWVM
 build_script:
-- ps: .\build_nuget.ps1
+- ps: >-
+    .\build_npm.ps1
+    .\build_nuget.ps1
 artifacts:
 - path: Output\*.nupkg
   name: NugetPackages

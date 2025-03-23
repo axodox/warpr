@@ -64,5 +64,16 @@ Write-Host 'Creating nuget package...' -ForegroundColor Magenta
 .\Tools\nuget.exe pack .\warp-drive\WarpDrive.Patched.nuspec -OutputDirectory .\Output
 Remove-Item -Path '.\warp-drive\WarpDrive.Patched.nuspec'
 
+## Build gateway
 Write-Host 'Building warp-gateway...' -ForegroundColor Magenta
 MSBuild.exe .\warpr.sln -t:warp-gateway -p:Configuration=Release -m:$coreCount -v:m -p:VersionPrefix=$version
+
+if ($LastExitCode -eq 0) {
+  Write-Host "Building warp-gateway succeeded!" -ForegroundColor Green
+}
+else {
+  Write-Host "Building warp-gateway failed!" -ForegroundColor Red 
+  throw "Building warp-gateway failed!"
+}
+
+Write-Host 'Done.' -ForegroundColor Green
