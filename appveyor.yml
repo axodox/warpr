@@ -9,6 +9,7 @@ environment:
 build_script:
 - ps: >-
     .\build_npm.ps1
+
     .\build_nuget.ps1
 artifacts:
 - path: Output\*.nupkg
