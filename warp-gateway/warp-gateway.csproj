@@ -7,6 +7,17 @@
     <Nullable>enable</Nullable>
     <OutputType>Library</OutputType>
     <AssemblyName>Warpr.Gateway</AssemblyName>
+    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <Title>Warpr.Gateway</Title>
+    <Authors>axodox</Authors>
+    <Description>The gateway for Warpr.</Description>
+    <RepositoryType>git</RepositoryType>
+    <RepositoryUrl>https://github.com/axodox/warpr</RepositoryUrl>
+    <PackageTags>streaming aspdotnet</PackageTags>
+    <IsPackable>true</IsPackable>
+    <AssemblyVersion>$(VersionPrefix)</AssemblyVersion>
+    <FileVersion>$(VersionPrefix)</FileVersion>
+    <PackageOutputPath>..\Output</PackageOutputPath>
   </PropertyGroup>
 
 </Project>

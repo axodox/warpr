@@ -11,10 +11,21 @@ Get-Content "$env:temp\vcvars.txt" | Foreach-Object {
   }
 }
 
-Write-Host 'Update dependencies...' -ForegroundColor Magenta
+Write-Host 'Updating dependencies...' -ForegroundColor Magenta
 .\Tools\nuget.exe restore .\warpr.sln
 
+Write-Host 'Collecting build version information...' -ForegroundColor Magenta
+$version = if ($null -ne $env:APPVEYOR_BUILD_VERSION) { $env:APPVEYOR_BUILD_VERSION } else { "1.0.0.0" }
+Write-Host "Version: $version"
+
+$branch = if ($null -ne $env:APPVEYOR_REPO_BRANCH) { $env:APPVEYOR_REPO_BRANCH } else { "master" }
+Write-Host "Branch: $branch"
+
+$commit = if ($null -ne $env:APPVEYOR_REPO_COMMIT) { $env:APPVEYOR_REPO_COMMIT } else { $null }
+Write-Host "Commit: $commit"
+
 # Build projects
+Write-Host 'Building warp-drive...' -ForegroundColor Magenta
 $coreCount = (Get-CimInstance -class Win32_ComputerSystem).NumberOfLogicalProcessors
 $configurations = "Debug", "Release"
 $platforms = "x64", "x86"
@@ -23,7 +34,7 @@ foreach ($platform in $platforms) {
   foreach ($config in $configurations) {
     Write-Host "Building $platform $config..." -ForegroundColor Magenta
     MSBuild.exe .\warpr.sln -t:warp-drive -p:Configuration=$config -p:Platform=$platform -m:$coreCount -v:m
-
+    
     if ($LastExitCode -eq 0) {
       Write-Host "Building $platform $config succeeded!" -ForegroundColor Green
     }
@@ -41,9 +52,8 @@ New-Item -Path '.\Output' -ItemType Directory -Force
 Write-Host 'Patching nuspec...' -ForegroundColor Magenta
 $nuspec = [xml](Get-Content "$PSScriptRoot\warp-drive\Warpr.WarpDrive.nuspec")
 
-$nuspec.package.metadata.version = if ($null -ne $env:APPVEYOR_BUILD_VERSION) { $env:APPVEYOR_BUILD_VERSION } else { "1.0.0.0" }
-$nuspec.package.metadata.repository.branch = if ($null -ne $env:APPVEYOR_REPO_BRANCH) { $env:APPVEYOR_REPO_BRANCH } else { "master" }
-$commit = if ($null -ne $env:APPVEYOR_REPO_COMMIT) { $env:APPVEYOR_REPO_COMMIT } else { $null }
+$nuspec.package.metadata.version = $version
+$nuspec.package.metadata.repository.branch = $branch
 if ($null -ne $commit) {
   $nuspec.package.metadata.repository.SetAttribute("commit", $commit)
 }
@@ -53,3 +63,6 @@ $nuspec.Save("$PSScriptRoot\warp-drive\WarpDrive.Patched.nuspec")
 Write-Host 'Creating nuget package...' -ForegroundColor Magenta
 .\Tools\nuget.exe pack .\warp-drive\WarpDrive.Patched.nuspec -OutputDirectory .\Output
 Remove-Item -Path '.\warp-drive\WarpDrive.Patched.nuspec'
+
+Write-Host 'Building warp-gateway...' -ForegroundColor Magenta
+MSBuild.exe .\warpr.sln -t:warp-gateway -p:Configuration=Release -m:$coreCount -v:m -p:VersionPrefix=$version
