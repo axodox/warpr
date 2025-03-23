@@ -20,8 +20,8 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\warp-client\warp-client.esproj" />
     <ProjectReference Include="..\warp-gateway\warp-gateway.csproj" />
-    <ProjectReference Include="..\warper\warper.esproj" />
   </ItemGroup>
 
   <ItemGroup>
