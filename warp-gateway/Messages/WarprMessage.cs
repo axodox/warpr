@@ -20,7 +20,12 @@ namespace Warpr.Gateway.Messages
     public ConnectionRequest() { }
   }
 
-  public class PairingCompleteMessage : WarprMessage { }
+  public class PairingCompleteMessage : WarprMessage
+  {
+    public string[] IceServers { get; init; }
+
+    public float ConnectionTimeout { get; init; }
+  }
 
   public class PeerConnectionDescriptionMessage : WarprMessage
   {

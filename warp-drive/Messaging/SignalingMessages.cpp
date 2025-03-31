@@ -29,6 +29,11 @@ namespace Warpr::Messaging
     return WarprSignalingMessageType::PairingCompleteMessage;
   }
 
+  PairingCompleteMessage::PairingCompleteMessage() :
+    IceServers(this, "IceServers"),
+    ConnectionTimeout(this, "ConnectionTimeout")
+  { }
+
   PeerConnectionDescriptionMessage::PeerConnectionDescriptionMessage() :
     Description(this, "Description")
   { }

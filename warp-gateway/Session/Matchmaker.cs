@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Concurrent;
+using Warpr.Configuration;
 using Warpr.Gateway.Messages;
 using Warpr.Gateway.Messaging;
 using Warpr.Gateway.Sources;
@@ -13,7 +14,7 @@ namespace Warpr.Gateway.Session
 
     bool _isDisposed = false;
 
-    public SourceSinkPair(WebSocketConnection source, WebSocketConnection sink)
+    public SourceSinkPair(WebSocketConnection source, WebSocketConnection sink, IGatewayConfiguration configuration)
     {
       Source = source;
       Sink = sink;
@@ -21,7 +22,10 @@ namespace Warpr.Gateway.Session
       source.MessageReceived += OnSourceMessageReceived;
       sink.MessageReceived += OnSinkMessageReceived;
 
-      var message = new PairingCompleteMessage();
+      var message = new PairingCompleteMessage() {
+        ConnectionTimeout = configuration.ConnectionTimeout,
+        IceServers = configuration.IceServers.ToArray() 
+      };
       source.SendMessage(message);
       sink.SendMessage(message);
     }
@@ -68,6 +72,7 @@ namespace Warpr.Gateway.Session
     private readonly ILogger _logger;
     private readonly IStreamingSourceRepository _streamingSource;
     private readonly IStreamingSinkRepository _streamingSink;
+    private readonly IGatewayConfiguration _gatewayConfiguration;
 
     private readonly object _syncRoot = new();
 
@@ -78,11 +83,13 @@ namespace Warpr.Gateway.Session
     public Matchmaker(
       ILogger<Matchmaker> logger,
       IStreamingSourceRepository sourceRepository,
-      IStreamingSinkRepository sinkRepository)
+      IStreamingSinkRepository sinkRepository,
+      IGatewayConfiguration gatewayConfiguration)
     {
       _logger = logger;
       _streamingSource = sourceRepository;
       _streamingSink = sinkRepository;
+      _gatewayConfiguration = gatewayConfiguration;
 
       _streamingSource.ConnectionAdded += OnSourceAdded;
       _streamingSource.ConnectionRemoved += OnSourceRemoved;
@@ -167,7 +174,7 @@ namespace Warpr.Gateway.Session
         if (sink == null) continue;
 
         _logger.LogInformation($"Pair {source.EndPoint} -> {sink.EndPoint} added.");
-        _pairs.Add(new SourceSinkPair(source, sink));
+        _pairs.Add(new SourceSinkPair(source, sink, _gatewayConfiguration));
 
         _freeSources.Remove(source.EndPoint);
         _freeSinks.Remove(sink.EndPoint);

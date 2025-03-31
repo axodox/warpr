@@ -6,7 +6,7 @@ using namespace Axodox::Storage;
 using namespace Axodox::Threading;
 using namespace rtc;
 using namespace std;
-using namespace winrt;
+using namespace std::chrono;
 
 namespace Warpr::Messaging
 {
@@ -40,7 +40,7 @@ namespace Warpr::Messaging
     _containerRef(container->get_ref()),
     _settings(container->resolve<WarpConfiguration>()),
     _signaler(container->resolve<WebSocketClient>()),
-    _signalerMessageReceivedSubscription(_signaler->MessageReceived({ this, &WebRtcClient::OnSignalerMessageReceived }))
+    _signalerMessageReceivedSubscription(_signaler->MessageReceived({ this, &WebRtcClient::OnSignalingMessageReceived }))
   { }
 
   bool WebRtcClient::IsConnected() const
@@ -50,6 +50,8 @@ namespace Warpr::Messaging
 
   void WebRtcClient::SendMessage(std::span<const uint8_t> bytes, WebRtcChannel channelType)
   {
+    lock_guard lock(_mutex);
+
     //If we are not connected then do not send
     if (!IsConnected()) return;
 
@@ -109,14 +111,14 @@ namespace Warpr::Messaging
     }
   }
 
-  void WebRtcClient::OnSignalerMessageReceived(WebSocketClient* sender, const WarprSignalingMessage* message)
+  void WebRtcClient::OnSignalingMessageReceived(WebSocketClient* sender, const WarprSignalingMessage* message)
   {
     lock_guard lock(_mutex);
 
     switch (message->Type())
     {
     case WarprSignalingMessageType::PairingCompleteMessage:
-      ConnectAsync();
+      OnPairingComplete(static_cast<const PairingCompleteMessage*>(message));
       break;
 
     case WarprSignalingMessageType::PeerConnectionDescriptionMessage:
@@ -142,82 +144,93 @@ namespace Warpr::Messaging
     }
   }
 
-  winrt::fire_and_forget WebRtcClient::ConnectAsync()
+  void WebRtcClient::OnPairingComplete(const PairingCompleteMessage* message)
   {
-    _logger.log(log_severity::information, "Initializing WebRTC connection...");
-
-    auto lifetime = _containerRef.try_lock();
-    co_await resume_background();
-
-    thread_name_context context{ "* webrtc connect" };
-
-    //Create configuration
-    Configuration config;
-    config.iceServers.reserve(_settings->IceServers.size());
-    for (auto& server : _settings->IceServers)
+    _configuration.ConnectionTimeout = duration<float>(*message->ConnectionTimeout);
+    _configuration.IceServers.clear();
+    _configuration.IceServers.reserve(message->IceServers->size());
+    for (auto& server : *message->IceServers)
     {
-      config.iceServers.emplace_back(server);
+      _configuration.IceServers.emplace_back(server);
     }
-    config.maxMessageSize = 256 * 1024;
-    config.mtu = 1500;
 
-    //Create peer connection
-    _peerConnection = make_unique<PeerConnection>(config);
+    _connectionThread.reset();
+    _connectionThread = background_thread({ this, &WebRtcClient::Connect }, "* webrtc connect");
+  }
 
-    _peerConnection->onLocalDescription([=](const Description& description) {
-      PeerConnectionDescriptionMessage message;
-      *message.Description = string(description);
-      _signaler->SendMessage(message);
+  void WebRtcClient::Connect()
+  {
+    while (!_connectionThread.is_exiting())
+    {
+      _logger.log(log_severity::information, "Initializing WebRTC connection...");
 
-      _logger.log(log_severity::debug, "Local description:\n{}", *message.Description);
-      });
+      {
+        lock_guard lock(_mutex);
 
-    _peerConnection->onLocalCandidate([=](const Candidate& candidate) {
-      PeerConnectionCandidateMessage message;
-      *message.Candidate = string(candidate);
-      _signaler->SendMessage(message);
+        //Reset existing connection
+        _lowLatencyChannel.reset();
+        _reliableChannel.reset();
+        _peerConnection.reset();
 
-      _logger.log(log_severity::debug, "Local candidate: {}", *message.Candidate);
-      });
+        //Create configuration
+        Configuration config;
+        config.iceServers = _configuration.IceServers;
+        config.maxMessageSize = 256 * 1024;
+        config.mtu = 1500;
 
-    _peerConnection->onStateChange([=](PeerConnection::State state) {
-      _logger.log(log_severity::information, "State changed to '{}'.", _stateNames[size_t(state)]);
-      });
+        //Create peer connection      
+        _peerConnection = make_unique<PeerConnection>(config);
 
-    _peerConnection->onIceStateChange([=](PeerConnection::IceState state) {
-      _logger.log(log_severity::information, "ICE State changed to '{}'.", _iceStateNames[size_t(state)]);
-      });
+        _peerConnection->onLocalDescription([=](const Description& description) {
+          PeerConnectionDescriptionMessage message;
+          *message.Description = string(description);
+          _signaler->SendMessage(message);
 
-    _peerConnection->onGatheringStateChange([=](PeerConnection::GatheringState state) {
-      _logger.log(log_severity::information, "Gathering State changed to '{}'.", _gatheringStateNames[size_t(state)]);
-      });
+          _logger.log(log_severity::debug, "Local description:\n{}", *message.Description);
+          });
 
-    //Create data channel
-    _reliableChannel = _peerConnection->createDataChannel("reliable");
-    _lowLatencyChannel = _peerConnection->createDataChannel("low_latency", {
-      .reliability = {
-        .unordered = true,
-        .maxRetransmits = 0
+        _peerConnection->onLocalCandidate([=](const Candidate& candidate) {
+          PeerConnectionCandidateMessage message;
+          *message.Candidate = string(candidate);
+          _signaler->SendMessage(message);
+
+          _logger.log(log_severity::debug, "Local candidate: {}", *message.Candidate);
+          });
+
+        _peerConnection->onStateChange([=](PeerConnection::State state) {
+          _logger.log(log_severity::information, "State changed to '{}'.", _stateNames[size_t(state)]);
+          });
+
+        _peerConnection->onIceStateChange([=](PeerConnection::IceState state) {
+          _logger.log(log_severity::information, "ICE State changed to '{}'.", _iceStateNames[size_t(state)]);
+          });
+
+        _peerConnection->onGatheringStateChange([=](PeerConnection::GatheringState state) {
+          _logger.log(log_severity::information, "Gathering State changed to '{}'.", _gatheringStateNames[size_t(state)]);
+          });
+
+        //Create data channel
+        _reliableChannel = _peerConnection->createDataChannel("reliable");
+        _lowLatencyChannel = _peerConnection->createDataChannel("low_latency", {
+          .reliability = {
+            .unordered = true,
+            .maxRetransmits = 0
+          }
+          });
+
+        _reliableChannel->onMessage([=](message_variant data) {
+          OnMessageReceived(WebRtcChannel::Reliable, data);
+          });
+        _lowLatencyChannel->onMessage([=](message_variant data) {
+          OnMessageReceived(WebRtcChannel::LowLatency, data);
+          });
       }
-    });
 
-    _reliableChannel->onMessage([=](message_variant data) {
-      OnMessageReceived(WebRtcChannel::Reliable, data);
-      });
-    _lowLatencyChannel->onMessage([=](message_variant data) {
-      OnMessageReceived(WebRtcChannel::LowLatency, data);
-      });
+      this_thread::sleep_for(_configuration.ConnectionTimeout);
+      if (_peerConnection->state() == PeerConnection::State::Connected) break;
 
-    this_thread::sleep_for(1s);
-
-    if (_peerConnection->state() == PeerConnection::State::Connected) co_return;
-
-    _logger.log(log_severity::warning, "Failed to connect, retrying...");
-    _lowLatencyChannel.reset();
-    _reliableChannel.reset();
-    _peerConnection.reset();
-
-    ConnectAsync();
+      _logger.log(log_severity::warning, "Failed to connect, retrying...");
+    }
   }
 
   void WebRtcClient::OnMessageReceived(WebRtcChannel channel, rtc::message_variant message)

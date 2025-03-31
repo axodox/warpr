@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.HttpOverrides;
 using System.Reflection;
+using Warpr.Configuration;
 using Warpr.Gateway.Session;
 using Warpr.Gateway.Sources;
 
@@ -27,6 +28,7 @@ builder.Services
   });
 
 builder.Services
+  .AddSingleton<IGatewayConfiguration, GatewayConfiguration>()
   .AddSingleton<IStreamingSourceRepository, StreamingSourceRepository>()
   .AddSingleton<IStreamingSinkRepository, StreamingSinkRepository>()
   .AddSingleton<IMatchmaker, Matchmaker>();

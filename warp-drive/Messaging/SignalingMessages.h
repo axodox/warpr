@@ -30,6 +30,11 @@ namespace Warpr::Messaging
   struct PairingCompleteMessage : public WarprSignalingMessage
   {
     virtual WarprSignalingMessageType Type() const override;
+
+    PairingCompleteMessage();
+
+    Axodox::Json::json_property<std::vector<std::string>> IceServers;
+    Axodox::Json::json_property<float> ConnectionTimeout;
   };
 
   struct PeerConnectionDescriptionMessage : public WarprSignalingMessage

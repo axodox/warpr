@@ -4,8 +4,8 @@
   "scripts": {
     "ng": "ng",
     "start": "ng serve --watch --host=0.0.0.0",
-    "build": "ng build",
-    "watch": "ng build --watch --configuration development",
+    "build": "ng build warpr-app",
+    "watch": "ng build warpr-app --watch --configuration development",
     "test": "ng test",
     "prestart": "node aspnetcore-https",
     "start:windows": "ng serve --ssl --ssl-cert \"%APPDATA%\\ASP.NET\\https\\%npm_package_name%.pem\" --ssl-key \"%APPDATA%\\ASP.NET\\https\\%npm_package_name%.key\" --host=127.0.0.1",

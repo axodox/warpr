@@ -1,8 +1,8 @@
 import { Injectable } from '@angular/core';
 import { MessagingService } from './messaging.service';
-import { PeerConnectionCandidateMessage, PeerConnectionDescriptionMessage, WarprSignalingMessage, WarprSignalingMessageType } from '../data/signaling-messages';
+import { GetConfiguration, PairingCompleteMessage, PeerConnectionCandidateMessage, PeerConnectionDescriptionMessage, WarprSignalingMessage, WarprSignalingMessageType } from '../data/signaling-messages';
 import { IMessagingClient } from '../networking/messaging-client';
-import { EncodedFrame, FrameType } from '../data/frames';
+import { EncodedFrame } from '../data/frames';
 import { EventOwner, EventPublisher } from '../infrastructure/events';
 import { MessageAssembler } from '../infrastructure/message-assembler';
 
@@ -20,48 +20,22 @@ export class StreamingService {
   public readonly FrameReceived = new EventPublisher<StreamingService, EncodedFrame>(this._events);
   public readonly Connected = new EventPublisher<StreamingService, any>(this._events);
 
-  private static _config: RTCConfiguration = {
-    iceServers: [
-      { urls: "stun:stun.l.google.com:19302" },
-      { urls: "stun:stun.relay.metered.ca:80" },
-      {
-        urls: "turn:global.relay.metered.ca:80",
-        username: "cb51ef701a61be3cdc89466f",
-        credential: "BBnGCvnTLaxhVbuf"
-      },
-      {
-        urls: "turn:global.relay.metered.ca:80?transport=tcp",
-        username: "cb51ef701a61be3cdc89466f",
-        credential: "BBnGCvnTLaxhVbuf"
-      },
-      {
-        urls: "turn:global.relay.metered.ca:443",
-        username: "cb51ef701a61be3cdc89466f",
-        credential: "BBnGCvnTLaxhVbuf"
-      },
-      {
-        urls: "turns:global.relay.metered.ca:443?transport=tcp",
-        username: "cb51ef701a61be3cdc89466f",
-        credential: "BBnGCvnTLaxhVbuf"
-      }
-    ]
-  };
-
   constructor(
     private _messagingService: MessagingService) {
 
     _messagingService.MessageReceived.Subscribe((sender: IMessagingClient<WarprSignalingMessage>, message: WarprSignalingMessage) => this.OnMessageReceived(sender, message));
-
-    this.Reconnect();
+    _messagingService.Connect();
   }
 
-  private Reconnect() {
+  private Reconnect(configuration: RTCConfiguration) {
+    console.log("Establishing peer connection...");
+
     this._reliableConnection?.close();
     this._lowLatencyConnection?.close();
     this._peerConnection?.close();
     this._messageBuilder = new MessageAssembler();
 
-    this._peerConnection = new RTCPeerConnection(StreamingService._config);
+    this._peerConnection = new RTCPeerConnection(configuration);
     this._peerConnection.onicecandidate = (event) => this.OnIceCandidateAdded(event.candidate?.candidate);
     this._peerConnection.ondatachannel = (event) => this.OnDataChannel(event);
     this._peerConnection.onconnectionstatechange = (event) => this.OnConnectionStateChanged();
@@ -107,7 +81,7 @@ export class StreamingService {
     if (elapsed > 1000) {
       this._lastRefreshTime = now;
 
-      console.log(`Messages: ${this._count / elapsed * 1000} FPS`);
+      console.debug(`Messages: ${this._count / elapsed * 1000} FPS`);
       this._count = 0;
     }
 
@@ -125,13 +99,13 @@ export class StreamingService {
 
   private async OnMessageReceived(sender: IMessagingClient<WarprSignalingMessage>, message: WarprSignalingMessage) {
 
-    if (!this._peerConnection) return;
-
     switch (message.$type) {
       case WarprSignalingMessageType.PairingCompleteMessage:
-        this.Reconnect();
+        this.Reconnect(GetConfiguration(message.IceServers));
         break;
       case WarprSignalingMessageType.PeerConnectionDescriptionMessage:
+        if (!this._peerConnection) return;
+
         await this._peerConnection.setRemoteDescription({ type: "offer", sdp: message.Description });
         let answer = await this._peerConnection.createAnswer();
         await this._peerConnection.setLocalDescription(answer);
@@ -142,6 +116,8 @@ export class StreamingService {
 
         break;
       case WarprSignalingMessageType.PeerConnectionCandidateMessage:
+        if (!this._peerConnection) return;
+
         await this._peerConnection.addIceCandidate({ candidate: message.Candidate, sdpMid: "0" });
         break;
     }

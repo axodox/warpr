@@ -21,6 +21,12 @@ namespace Warpr::Messaging
     inline static const Axodox::Infrastructure::logger _logger{ "WebRtcClient" };
     Axodox::Infrastructure::event_owner _events;
 
+    struct PairingConfiguration
+    {
+      std::vector<rtc::IceServer> IceServers;
+      std::chrono::duration<float> ConnectionTimeout;
+    };
+
   public:
     WebRtcClient(Axodox::Infrastructure::dependency_container* container);
 
@@ -45,10 +51,15 @@ namespace Warpr::Messaging
     std::shared_ptr<rtc::DataChannel> _reliableChannel;
     std::shared_ptr<rtc::DataChannel> _lowLatencyChannel;
 
+    PairingConfiguration _configuration;
+
     Axodox::Infrastructure::event_subscription _signalerMessageReceivedSubscription;
 
-    void OnSignalerMessageReceived(WebSocketClient* sender, const WarprSignalingMessage* message);
-    winrt::fire_and_forget ConnectAsync();
+    Axodox::Threading::background_thread _connectionThread;
+
+    void OnSignalingMessageReceived(WebSocketClient* sender, const WarprSignalingMessage* message);
+    void OnPairingComplete(const PairingCompleteMessage* message);
+    void Connect();
 
     void OnMessageReceived(WebRtcChannel channel, rtc::message_variant message);
   };
