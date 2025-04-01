@@ -1,24 +1,37 @@
 using Microsoft.AspNetCore.HttpOverrides;
-using System.Reflection;
-using Warpr.Configuration;
+using Warpr.Gateway.Extensions;
 using Warpr.Gateway.Session;
-using Warpr.Gateway.Sources;
 
+//Ensure certificate
+var certificate = CertificateHelper.TryLoad("wormhole.pfx");
+if (certificate == null || !CertificateHelper.Validate(certificate))
+{
+  certificate = CertificateHelper.CreateSelfSigned("wormhole");
+  CertificateHelper.TryStore(certificate, "wormhole.pfx");
+  CertificateHelper.TryExportPemAndKey(certificate, "wormhole");
+}
+
+if (!certificate.Verify())
+{
+  CertificateHelper.TryInstallCertificate(certificate);
+}
+
+//Create builder
 var builder = WebApplication.CreateBuilder(args);
 builder.WebHost.UseKestrel(p =>
 {
   p.ListenAnyIP(5164);
-  p.ListenAnyIP(7074, p => p.UseHttps("axodox-pc.pfx", "p2cyfqR4"));
+  p.ListenAnyIP(7074, p => p.UseHttps(certificate));
 });
 
 // Add services to the container.
 builder.Services
   .AddCors(p => p.AddPolicy("CorsPolicy", p => p
            .AllowAnyMethod()
-           .AllowAnyHeader()        
+           .AllowAnyHeader()
            .AllowAnyOrigin()))
   .AddControllers()
-  .AddApplicationPart(Assembly.GetExecutingAssembly());
+  .AddWarprControllers();
 
 builder.Services
   .Configure<ForwardedHeadersOptions>(options =>
@@ -27,15 +40,10 @@ builder.Services
         ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
   });
 
-builder.Services
-  .AddSingleton<IGatewayConfiguration, GatewayConfiguration>()
-  .AddSingleton<IStreamingSourceRepository, StreamingSourceRepository>()
-  .AddSingleton<IStreamingSinkRepository, StreamingSinkRepository>()
-  .AddSingleton<IMatchmaker, Matchmaker>();
+builder.Services.AddWarprServices();
 
 var app = builder.Build();
-
-app.Services.GetService<IMatchmaker>();
+app.Services.InitializeWarpr();
 
 // Configure the HTTP request pipeline.
 app.UseDefaultFiles(new DefaultFilesOptions());

@@ -24,10 +24,4 @@
     <ProjectReference Include="..\warp-gateway\warp-gateway.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <None Update="axodox-pc.pfx">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-  </ItemGroup>
-
 </Project>

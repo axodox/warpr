@@ -109,8 +109,8 @@
               "Cross-Origin-Embedder-Policy": "require-corp"
             },
             "ssl": true,
-            "sslKey": "../wormhole/axodox-pc.key",
-            "sslCert": "../wormhole/axodox-pc.pem"
+            "sslKey": "../wormhole/wormhole.key",
+            "sslCert": "../wormhole/wormhole.pem"
           }
         },
         "extract-i18n": {
