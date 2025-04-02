@@ -89,7 +89,7 @@ npm link warpr
 Pop-Location
 
 npm install
-ng build warpr-app
+npm run build_custom warpr-app
 
 if ($LastExitCode -eq 0) {
   Write-Host "Building warp-client succeeded!" -ForegroundColor Green

@@ -14,7 +14,7 @@ Write-Host 'Installing dependencies...' -ForegroundColor Magenta
 npm install
 
 Write-Host 'Building warpr-lib...' -ForegroundColor Magenta
-ng build warpr-lib
+npm run build_custom warpr-lib
 
 if ($LastExitCode -eq 0) {
   Write-Host "Building warpr-lib succeeded!" -ForegroundColor Green
