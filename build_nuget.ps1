@@ -84,7 +84,7 @@ Push-Location ./dist/warpr-lib
 npm link
 Pop-Location
 
-Push-Location ./dist/warpr-app
+Push-Location ./projects/warpr-app
 npm link warpr
 Pop-Location
 
