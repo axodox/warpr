@@ -1,7 +1,6 @@
-﻿using System;
-using System.Linq;
-using System.Net;
+﻿using System.Net;
 using System.Net.NetworkInformation;
+using System.Net.Sockets;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 
@@ -27,7 +26,6 @@ namespace Warpr.Gateway.Extensions
       var certificateRequest = new CertificateRequest($"CN={subjectName}", privateKey, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
       certificateRequest.CertificateExtensions.Add(new X509BasicConstraintsExtension(true, false, 0, true));
       certificateRequest.CertificateExtensions.Add(new X509KeyUsageExtension(X509KeyUsageFlags.KeyCertSign | X509KeyUsageFlags.CrlSign, true));
-      certificateRequest.CertificateExtensions.Add(new X509SubjectKeyIdentifierExtension(certificateRequest.PublicKey, false));
 
       var validFrom = DateTimeOffset.UtcNow;
       var validUntil = validFrom.AddYears(1);
@@ -48,7 +46,6 @@ namespace Warpr.Gateway.Extensions
           new Oid("1.3.6.1.5.5.7.3.2")  //Client authentication
           },
           false));
-      //certificateRequest.CertificateExtensions.Add(new X509SubjectKeyIdentifierExtension(certificateRequest.PublicKey, false));
 
       var alternativeNameBuilder = new SubjectAlternativeNameBuilder();
       foreach (var name in GetDnsNames())
@@ -163,6 +160,7 @@ namespace Warpr.Gateway.Extensions
       return NetworkInterface
         .GetAllNetworkInterfaces()
         .SelectMany(p => p.GetIPProperties().UnicastAddresses.Select(q => q.Address))
+        .Where(p => p.AddressFamily == AddressFamily.InterNetwork)
         .ToList();
     }
 
