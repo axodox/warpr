@@ -27,8 +27,8 @@ namespace Warpr.Gateway.Extensions
       certificateRequest.CertificateExtensions.Add(new X509BasicConstraintsExtension(true, false, 0, true));
       certificateRequest.CertificateExtensions.Add(new X509KeyUsageExtension(X509KeyUsageFlags.KeyCertSign | X509KeyUsageFlags.CrlSign, true));
 
-      var validFrom = DateTimeOffset.UtcNow;
-      var validUntil = validFrom.AddYears(1);
+      var validFrom = DateTimeOffset.UtcNow.AddDays(-1);
+      var validUntil = validFrom.AddYears(10).AddDays(1);
       return certificateRequest.CreateSelfSigned(validFrom, validUntil);
     }
 
@@ -58,8 +58,8 @@ namespace Warpr.Gateway.Extensions
       }
       certificateRequest.CertificateExtensions.Add(alternativeNameBuilder.Build());
 
-      var validFrom = DateTimeOffset.UtcNow;
-      var validUntil = validFrom.AddYears(1);
+      var validFrom = DateTimeOffset.UtcNow.AddDays(-1);
+      var validUntil = validFrom.AddYears(1).AddDays(1);
       if (parentCertificate == null)
       {
         return certificateRequest.CreateSelfSigned(validFrom, validUntil);

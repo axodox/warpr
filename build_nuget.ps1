@@ -76,4 +76,43 @@ else {
   throw "Building warp-gateway failed!"
 }
 
+## Build client
+Write-Host 'Building warp-client...' -ForegroundColor Magenta
+
+Push-Location ./warp-client
+Push-Location ./dist/warpr-lib
+npm link
+Pop-Location
+
+Push-Location ./dist/warpr-app
+npm link warpr
+Pop-Location
+
+npm install
+ng build warpr-app
+
+if ($LastExitCode -eq 0) {
+  Write-Host "Building warp-client succeeded!" -ForegroundColor Green
+}
+else {
+  Write-Host "Building warp-client failed!" -ForegroundColor Red 
+  throw "Building warp-client failed!"
+}
+Pop-Location
+
+Write-Host 'Patching nuspec...' -ForegroundColor Magenta
+$nuspec = [xml](Get-Content "$PSScriptRoot\warp-client\Warpr.Client.nuspec")
+
+$nuspec.package.metadata.version = $version
+$nuspec.package.metadata.repository.branch = $branch
+if ($null -ne $commit) {
+  $nuspec.package.metadata.repository.SetAttribute("commit", $commit)
+}
+
+$nuspec.Save("$PSScriptRoot\warp-client\Warpr.Client.Patched.nuspec")
+
+Write-Host 'Creating nuget package...' -ForegroundColor Magenta
+.\Tools\nuget.exe pack .\warp-client\Warpr.Client.Patched.nuspec -OutputDirectory .\Output
+Remove-Item -Path '.\warp-client\Warpr.Client.Patched.nuspec'
+
 Write-Host 'Done.' -ForegroundColor Green

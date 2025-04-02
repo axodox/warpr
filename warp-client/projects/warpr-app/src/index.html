@@ -3,7 +3,13 @@
 <head>
   <meta charset="utf-8">
   <title>Warper</title>
-  <base href="/">
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      const base = document.createElement('base');
+      base.href = window.location.origin + window.location.pathname;
+      document.head.appendChild(base);
+    });
+  </script>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="icon" type="image/x-icon" href="favicon.ico">
 </head>

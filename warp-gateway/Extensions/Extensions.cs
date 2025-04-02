@@ -12,23 +12,29 @@ namespace Warpr.Gateway.Extensions
       return $"{connection.RemoteIpAddress}:{connection.RemotePort}";
     }
 
-    public static void AddWarprControllers(this IMvcBuilder builder)
+    public static IMvcBuilder AddWarprControllers(this IMvcBuilder builder)
     {
-      builder.AddApplicationPart(Assembly.GetExecutingAssembly());
+      return builder.AddApplicationPart(Assembly.GetExecutingAssembly());
     }
 
-    public static void AddWarprServices(this IServiceCollection services)
+    public static IMvcCoreBuilder AddWarprControllers(this IMvcCoreBuilder builder)
     {
-      services
+      return builder.AddApplicationPart(Assembly.GetExecutingAssembly());
+    }
+
+    public static IServiceCollection AddWarprServices(this IServiceCollection services)
+    {
+      return services
         .AddSingleton<IGatewayConfiguration, GatewayConfiguration>()
         .AddSingleton<IStreamingSourceRepository, StreamingSourceRepository>()
         .AddSingleton<IStreamingSinkRepository, StreamingSinkRepository>()
         .AddSingleton<IMatchmaker, Matchmaker>();
     }
 
-    public static void InitializeWarpr(this IServiceProvider serviceProvider)
+    public static IServiceProvider InitializeWarpr(this IServiceProvider serviceProvider)
     {
       serviceProvider.GetService<IMatchmaker>();
+      return serviceProvider;
     }
   }
 }

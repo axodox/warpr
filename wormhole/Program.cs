@@ -35,21 +35,11 @@ builder.WebHost.UseKestrel(p =>
 
 // Add services to the container.
 builder.Services
-  .AddCors(p => p.AddPolicy("CorsPolicy", p => p
-           .AllowAnyMethod()
-           .AllowAnyHeader()
-           .AllowAnyOrigin()))
+  .AddCors(p => p.AddPolicy("CorsPolicy", p => p.AllowAnyMethod().AllowAnyHeader().AllowAnyOrigin()))
+  .Configure<ForwardedHeadersOptions>(options => { options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto; })
+  .AddWarprServices()
   .AddControllers()
   .AddWarprControllers();
-
-builder.Services
-  .Configure<ForwardedHeadersOptions>(options =>
-  {
-    options.ForwardedHeaders =
-        ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
-  });
-
-builder.Services.AddWarprServices();
 
 var app = builder.Build();
 app.Services.InitializeWarpr();
@@ -77,7 +67,7 @@ app.Use((context, next) =>
 
 //app.UseHttpsRedirection();
 app.UseAuthorization();
-app.UseForwardedHeaders(new ForwardedHeadersOptions() { });
+app.UseForwardedHeaders();
 app.UseWebSockets();
 app.MapControllers();
 app.MapFallbackToFile("/index.html");
