@@ -239,6 +239,7 @@ ClientBin/
 *.pfx
 *.key
 *.pem
+*.cer
 *.publishsettings
 orleans.codegen.cs
 

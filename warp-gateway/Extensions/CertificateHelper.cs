@@ -1,4 +1,6 @@
-﻿using System.Net;
+﻿using System;
+using System.Linq;
+using System.Net;
 using System.Net.NetworkInformation;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
@@ -19,10 +21,23 @@ namespace Warpr.Gateway.Extensions
       }
     }
 
-    public static X509Certificate2 CreateSelfSigned(string subjectName)
+    public static X509Certificate2 CreateRoot(string subjectName)
     {
-      using var encryptionAlghorithm = RSA.Create(2048);
-      var certificateRequest = new CertificateRequest($"CN={subjectName}", encryptionAlghorithm, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
+      using var privateKey = RSA.Create(2048);
+      var certificateRequest = new CertificateRequest($"CN={subjectName}", privateKey, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
+      certificateRequest.CertificateExtensions.Add(new X509BasicConstraintsExtension(true, false, 0, true));
+      certificateRequest.CertificateExtensions.Add(new X509KeyUsageExtension(X509KeyUsageFlags.KeyCertSign | X509KeyUsageFlags.CrlSign, true));
+      certificateRequest.CertificateExtensions.Add(new X509SubjectKeyIdentifierExtension(certificateRequest.PublicKey, false));
+
+      var validFrom = DateTimeOffset.UtcNow;
+      var validUntil = validFrom.AddYears(1);
+      return certificateRequest.CreateSelfSigned(validFrom, validUntil);
+    }
+
+    public static X509Certificate2 Create(string subjectName, X509Certificate2? parentCertificate = null)
+    {
+      using var privateKey = RSA.Create(2048);
+      var certificateRequest = new CertificateRequest($"CN={subjectName}", privateKey, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
       certificateRequest.CertificateExtensions.Add(new X509BasicConstraintsExtension(false, false, 0, false));
       certificateRequest.CertificateExtensions.Add(new X509KeyUsageExtension(X509KeyUsageFlags.DigitalSignature | X509KeyUsageFlags.KeyEncipherment, true));
       certificateRequest.CertificateExtensions.Add(
@@ -33,16 +48,32 @@ namespace Warpr.Gateway.Extensions
           new Oid("1.3.6.1.5.5.7.3.2")  //Client authentication
           },
           false));
+      //certificateRequest.CertificateExtensions.Add(new X509SubjectKeyIdentifierExtension(certificateRequest.PublicKey, false));
 
       var alternativeNameBuilder = new SubjectAlternativeNameBuilder();
-      foreach (var name in GetNames())
+      foreach (var name in GetDnsNames())
       {
         alternativeNameBuilder.AddDnsName(name);
       }
+      foreach (var address in GetIPAddresses())
+      {
+        alternativeNameBuilder.AddIpAddress(address);
+      }
       certificateRequest.CertificateExtensions.Add(alternativeNameBuilder.Build());
 
-      var now = DateTimeOffset.UtcNow;
-      return certificateRequest.CreateSelfSigned(now, now.AddYears(1));
+      var validFrom = DateTimeOffset.UtcNow;
+      var validUntil = validFrom.AddYears(1);
+      if (parentCertificate == null)
+      {
+        return certificateRequest.CreateSelfSigned(validFrom, validUntil);
+      }
+      else
+      {
+        if (parentCertificate.NotBefore > validFrom) validFrom = parentCertificate.NotBefore;
+        if (parentCertificate.NotAfter < validUntil) validUntil = parentCertificate.NotAfter;
+        var childCertificate = certificateRequest.Create(parentCertificate, validFrom, validUntil, Guid.NewGuid().ToByteArray());
+        return childCertificate.CopyWithPrivateKey(privateKey);
+      }
     }
 
     public static bool Validate(X509Certificate2 certificate2)
@@ -54,10 +85,17 @@ namespace Warpr.Gateway.Extensions
         .Where(p => p.Oid?.Value == "2.5.29.17") //Subject Alternative Name
         .Select(p => p.Format(false))
         .FirstOrDefault() ?? "";
-      foreach (var name in GetNames())
+
+      foreach (var name in GetDnsNames())
       {
         if (!alternateNames.Contains(name, StringComparison.InvariantCultureIgnoreCase)) return false;
       }
+
+      foreach (var address in GetIPAddresses())
+      {
+        if (!alternateNames.Contains(address.ToString(), StringComparison.InvariantCultureIgnoreCase)) return false;
+      }
+
       return true;
     }
 
@@ -77,12 +115,28 @@ namespace Warpr.Gateway.Extensions
       }
     }
 
-    public static bool TryStore(X509Certificate certificate, string filePath)
+    public static bool TryExport(X509Certificate2 certificate, string filePath)
     {
       try
       {
-        var pfxBytes = certificate.Export(X509ContentType.Pfx);
-        File.WriteAllBytes(filePath, pfxBytes);
+        var extension = Path.GetExtension(filePath).ToLower();
+        switch (extension)
+        {
+          case ".pfx":
+            File.WriteAllBytes(filePath, certificate.Export(X509ContentType.Pfx));
+            break;
+          case ".cer":
+            File.WriteAllBytes(filePath, certificate.Export(X509ContentType.Cert));
+            break;
+          case ".pem":
+            File.WriteAllText(filePath, certificate.ExportCertificatePem());
+            break;
+          case ".key":
+            File.WriteAllText(filePath, certificate.GetRSAPrivateKey()?.ExportPkcs8PrivateKeyPem());
+            break;
+          default:
+            throw new ArgumentException($"Unsupported extension '{extension}'.", nameof(filePath));
+        }
         return true;
       }
       catch
@@ -91,27 +145,7 @@ namespace Warpr.Gateway.Extensions
       }
     }
 
-    public static bool TryExportPemAndKey(X509Certificate2 certificate, string filePath)
-    {
-      try
-      {
-        var pem = certificate.ExportCertificatePem();
-        if (pem == null) return false;
-        File.WriteAllText(filePath + ".pem", pem);
-
-        var key = certificate.GetRSAPrivateKey()?.ExportPkcs8PrivateKeyPem();
-        if (key == null) return false;
-        File.WriteAllText(filePath + ".key", key);
-
-        return true;
-      }
-      catch
-      {
-        return false;
-      }
-    }
-
-    public static X509Certificate2? TryLoad(string filePath)
+    public static X509Certificate2? TryImport(string filePath)
     {
       try
       {
@@ -124,17 +158,23 @@ namespace Warpr.Gateway.Extensions
       }
     }
 
-    public static List<string> GetNames()
+    public static List<IPAddress> GetIPAddresses()
+    {
+      return NetworkInterface
+        .GetAllNetworkInterfaces()
+        .SelectMany(p => p.GetIPProperties().UnicastAddresses.Select(q => q.Address))
+        .ToList();
+    }
+
+    public static List<string> GetDnsNames()
     {
       var results = new List<string>();
       var domain = TryGet(() => IPGlobalProperties.GetIPGlobalProperties().DomainName);
       var computerName = TryGet(() => Dns.GetHostName());
-      var ips = NetworkInterface.GetAllNetworkInterfaces().SelectMany(p => p.GetIPProperties().UnicastAddresses.Select(q => q.Address.ToString()));
 
       results.Add("localhost");
       if (!string.IsNullOrEmpty(computerName)) results.Add(computerName);
       if (!string.IsNullOrEmpty(computerName) && !string.IsNullOrEmpty(domain)) results.Add(computerName + "." + domain);
-      results.AddRange(ips);
       return results;
     }
   }

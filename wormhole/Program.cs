@@ -1,14 +1,23 @@
 using Microsoft.AspNetCore.HttpOverrides;
 using Warpr.Gateway.Extensions;
-using Warpr.Gateway.Session;
 
-//Ensure certificate
-var certificate = CertificateHelper.TryLoad("wormhole.pfx");
+//Ensure certificates
+var rootCertificate = CertificateHelper.TryImport("wormhole-ca.pfx");
+if (rootCertificate == null)
+{
+  rootCertificate = CertificateHelper.CreateRoot("wormhole-ca");
+  CertificateHelper.TryExport(rootCertificate, "wormhole-ca.pfx");
+  CertificateHelper.TryExport(rootCertificate, "wormhole-ca.cer");
+}
+
+var certificate = CertificateHelper.TryImport("wormhole.pfx");
 if (certificate == null || !CertificateHelper.Validate(certificate))
 {
-  certificate = CertificateHelper.CreateSelfSigned("wormhole");
-  CertificateHelper.TryStore(certificate, "wormhole.pfx");
-  CertificateHelper.TryExportPemAndKey(certificate, "wormhole");
+  certificate = CertificateHelper.Create("wormhole", rootCertificate);
+  CertificateHelper.TryExport(certificate, "wormhole.cer");
+  CertificateHelper.TryExport(certificate, "wormhole.pfx");
+  CertificateHelper.TryExport(certificate, "wormhole.pem");
+  CertificateHelper.TryExport(certificate, "wormhole.key");
 }
 
 if (!certificate.Verify())
