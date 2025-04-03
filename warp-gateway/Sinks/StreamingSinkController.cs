@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
-using Warpr.Gateway.Session;
-using Warpr.Gateway.Streams;
+using Warpr.Gateway.Messaging;
 
 namespace Warpr.Gateway.Sources
 {

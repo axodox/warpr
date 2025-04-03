@@ -2,9 +2,8 @@
 using Microsoft.AspNetCore.Mvc.Routing;
 using System.Diagnostics.CodeAnalysis;
 using Warpr.Gateway.Extensions;
-using Warpr.Gateway.Messaging;
 
-namespace Warpr.Gateway.Streams
+namespace Warpr.Gateway.Messaging
 {
   public class HttpWebSocketMethodAttribute : HttpMethodAttribute
   {

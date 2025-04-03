@@ -22,7 +22,7 @@ namespace Warpr.Gateway.Messages
 
   public class PairingCompleteMessage : WarprMessage
   {
-    public string[] IceServers { get; init; }
+    public string[] IceServers { get; init; } = [];
 
     public float ConnectionTimeout { get; init; }
   }

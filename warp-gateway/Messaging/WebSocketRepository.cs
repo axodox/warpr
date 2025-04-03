@@ -50,7 +50,7 @@ namespace Warpr.Gateway.Messaging
   public abstract class WebSocketRepository : IWebSocketRepository
   {
     private readonly ILogger _logger;
-    private readonly ConcurrentDictionary<string, WebSocketConnection> _connections = new();
+    private readonly ConcurrentDictionary<IWebSocketStream, WebSocketConnection> _connections = new();
 
     public event EventHandler<WebSocketConnection>? ConnectionAdded, ConnectionRemoved;
 
@@ -76,13 +76,14 @@ namespace Warpr.Gateway.Messaging
 
       if (warprMessage is ConnectionRequest request)
       {
-        var connection = new WebSocketConnection((sender as IWebSocketStream)!);
+        var stream = (sender as IWebSocketStream)!;
+        var connection = new WebSocketConnection(stream);
         connection.SessionId = request.SessionId;
-        _connections[connection.EndPoint] = connection;
+        _connections[stream] = connection;
 
         ConnectionAdded?.Invoke(this, connection);
 
-        _logger.LogInformation($"{connection.EndPoint} connected.");
+        _logger.LogInformation($"Endpoint {connection.EndPoint} connected with session id {connection.SessionId}.");
       }
     }
 
@@ -94,7 +95,7 @@ namespace Warpr.Gateway.Messaging
     private void OnStreamDisconnected(object? sender, EventArgs e)
     {
       var stream = (sender as IWebSocketStream)!;
-      if (_connections.TryRemove(stream.EndPoint, out var connection))
+      if (_connections.TryRemove(stream, out var connection))
       {
         ConnectionRemoved?.Invoke(this, connection);
       }

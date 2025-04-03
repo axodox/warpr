@@ -170,7 +170,7 @@ namespace Warpr.Gateway.Session
 
       foreach (var source in sources)
       {
-        var sink = sinks.FirstOrDefault(p => p.SessionId == source.SessionId);
+        var sink = sinks.FirstOrDefault(p => source.SessionId == Guid.Empty || p.SessionId == source.SessionId);
         if (sink == null) continue;
 
         _logger.LogInformation($"Pair {source.EndPoint} -> {sink.EndPoint} added.");

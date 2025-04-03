@@ -12,7 +12,7 @@ namespace Warpr::Graphics
     auto configuration = container->resolve<WarpConfiguration>();
     if (configuration->Device)
     {
-      _logger.log(log_severity::information, "User user provided device.");
+      _logger.log(log_severity::information, "Using user provided device.");
 
       _device = configuration->Device;
       _device->GetImmediateContext(_context.put());
