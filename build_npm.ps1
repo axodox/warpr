@@ -3,6 +3,9 @@ $version = if ($null -ne $env:APPVEYOR_BUILD_VERSION) { $env:APPVEYOR_BUILD_VERS
 $version = [Version]::Parse($version).ToString(3)
 Write-Host "Version: $version"
 
+Write-Host 'Creating output directory...' -ForegroundColor Magenta
+New-Item -Path '.\Output' -ItemType Directory -Force
+
 Write-Host 'Updating package.json...' -ForegroundColor Magenta
 Push-Location ./warp-client
 
@@ -26,12 +29,13 @@ else {
 
 Write-Host 'Creating npm package...' -ForegroundColor Magenta
 Push-Location ./projects/warpr-lib
-npm pack
 
 if ($env:APPVEYOR) {
   Write-Host 'Publishing npm package...' -ForegroundColor Magenta
   npm config set //registry.npmjs.org/:_authToken=$env:NPM_TOKEN
   npm publish
+} else {
+  npm pack --pack-destination="../../../Output"
 }
 
 Pop-Location
