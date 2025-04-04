@@ -146,6 +146,8 @@ namespace Warpr.Gateway.Extensions
     {
       try
       {
+        if (!File.Exists(filePath)) return null;
+
         var pfxBytes = File.ReadAllBytes(filePath);
         return new X509Certificate2(pfxBytes, null as string, X509KeyStorageFlags.Exportable);
       }

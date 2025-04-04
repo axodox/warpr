@@ -19,7 +19,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="$(Warpr-Location)\warp-drive\warp-drive.vcxproj">
+    <ProjectReference Include="$(Warpr-Location)\warp-drive\warp-drive.vcxproj" Condition="'$(Warpr-Location)'!=''">
       <Project>{0383b8f8-a914-4cf4-8197-73c681c17a8a}</Project>
     </ProjectReference>
   </ItemGroup>
