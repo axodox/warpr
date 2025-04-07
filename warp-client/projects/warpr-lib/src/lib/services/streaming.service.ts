@@ -12,38 +12,49 @@ import { MessageAssembler } from '../infrastructure/message-assembler';
 export class StreamingService {
 
   private _peerConnection?: RTCPeerConnection;
-  private _reliableConnection?: RTCDataChannel;
-  private _lowLatencyConnection?: RTCDataChannel;
-  private _messageBuilder? : MessageAssembler;
+  private _controlConnection?: RTCDataChannel;
+
+  private _streamConnection?: RTCDataChannel;
+  private _messageBuilder?: MessageAssembler;
+
+  private _auxConnection?: RTCDataChannel;
 
   private readonly _events = new EventOwner();
   public readonly FrameReceived = new EventPublisher<StreamingService, EncodedFrame>(this._events);
   public readonly Connected = new EventPublisher<StreamingService, any>(this._events);
 
+  public readonly ControlMessageReceived = new EventPublisher<StreamingService, any>(this._events);
+  public readonly AuxMessageReceived = new EventPublisher<StreamingService, any>(this._events);
+
   constructor(
     private _messagingService: MessagingService) {
 
-    _messagingService.MessageReceived.Subscribe((sender: IMessagingClient<WarprSignalingMessage>, message: WarprSignalingMessage) => this.OnMessageReceived(sender, message));
+    _messagingService.MessageReceived.Subscribe((sender: IMessagingClient<WarprSignalingMessage>, message: WarprSignalingMessage) => this.OnSignalingMessageReceived(sender, message));
     _messagingService.Connect();
   }
 
   private Reconnect(configuration: RTCConfiguration) {
     console.log("Establishing peer connection...");
 
-    this._reliableConnection?.close();
-    this._lowLatencyConnection?.close();
-    this._peerConnection?.close();
+    this._controlConnection?.close();
+    this._streamConnection?.close();
     this._messageBuilder = new MessageAssembler();
+    this._auxConnection?.close();
+    this._peerConnection?.close();
 
     this._peerConnection = new RTCPeerConnection(configuration);
     this._peerConnection.onicecandidate = (event) => this.OnIceCandidateAdded(event.candidate?.candidate);
     this._peerConnection.ondatachannel = (event) => this.OnDataChannel(event);
     this._peerConnection.onconnectionstatechange = (event) => this.OnConnectionStateChanged();
   }
-  
-  public SendMessage(message: any) {
+
+  public SendControlMessage(message: any) {
     let json = JSON.stringify(message);
-    this._reliableConnection?.send(json);
+    this._controlConnection?.send(json);
+  }
+
+  public SendAuxMessage(message: any) {
+    this._auxConnection?.send(message);
   }
 
   private OnConnectionStateChanged() {
@@ -54,14 +65,22 @@ export class StreamingService {
     console.log(`WebRTC data channel ${event.channel.label} connected.`);
 
     switch (event.channel.label) {
-      case "reliable":
-        this._reliableConnection = event.channel;
+      case "control":
+        this._controlConnection = event.channel;
+        this._controlConnection.binaryType = "arraybuffer"
+        this._controlConnection.onmessage = (event) => this._events.Raise(this.ControlMessageReceived, this, event.data);
         this._events.Raise(this.Connected, this, null);
         break;
-      case "low_latency":
-        this._lowLatencyConnection = event.channel;
-        this._lowLatencyConnection.binaryType = "arraybuffer"
-        this._lowLatencyConnection.onmessage = (event) => this.OnLowLatencyMessage(event);
+      case "stream":
+        this._streamConnection = event.channel;
+        this._streamConnection.binaryType = "arraybuffer"
+        this._streamConnection.onmessage = (event) => this.OnLowLatencyMessage(event);
+        break;
+      case "aux":
+        this._auxConnection = event.channel;
+        this._auxConnection.binaryType = "arraybuffer"
+        this._auxConnection.onmessage = (event) => this._events.Raise(this.AuxMessageReceived, this, event.data);
+        this._events.Raise(this.Connected, this, null);
         break;
     }
   }
@@ -97,7 +116,7 @@ export class StreamingService {
     this._messagingService.SendMessage(message);
   }
 
-  private async OnMessageReceived(sender: IMessagingClient<WarprSignalingMessage>, message: WarprSignalingMessage) {
+  private async OnSignalingMessageReceived(sender: IMessagingClient<WarprSignalingMessage>, message: WarprSignalingMessage) {
 
     switch (message.$type) {
       case WarprSignalingMessageType.PairingCompleteMessage:

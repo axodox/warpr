@@ -73,7 +73,7 @@ export class StreamHostComponent {
     let message = new PointerInputMessage(event, this._pointerStates, this._canvas!.nativeElement, wheelDelta);
     //console.log(message);
 
-    this._streamingService.SendMessage(message);
+    this._streamingService.SendControlMessage(message);
   }
 
   private OnWheelEvent(event: WheelEvent) {
@@ -146,7 +146,7 @@ export class StreamHostComponent {
 
         console.log(`Resized to ${canvasSize.Width} x ${canvasSize.Height}`);
         let message = new ResizeSurfaceMessage(canvasSize.Width, canvasSize.Height);
-        this._streamingService.SendMessage(message);
+        this._streamingService.SendControlMessage(message);
       }
 
       //Draw new frame
