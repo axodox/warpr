@@ -6,7 +6,6 @@ import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'warpr-stream-host',
-  standalone: true,
   imports: [CommonModule],
   templateUrl: './stream-host.component.html',
   styleUrl: './stream-host.component.scss'
@@ -35,7 +34,7 @@ export class StreamHostComponent {
     private _streamingService: StreamingService) {
     this._streamingService.Connected.Subscribe((sender, eventArgs) => this.OnConnected());
     this._streamingService.FrameReceived.Subscribe((sender, eventArgs) => this.OnFrameReceived(eventArgs));
-    
+
     this._decoder = new VideoDecoder({
       output: (frame) => this.OnFrameDecoded(frame),
       error: (error) => console.log(error)
