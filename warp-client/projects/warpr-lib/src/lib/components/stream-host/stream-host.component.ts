@@ -1,4 +1,4 @@
-import { Component, ElementRef, ViewChild } from '@angular/core';
+import { Component, ElementRef, Input, ViewChild } from '@angular/core';
 import { StreamingService } from '../../services/streaming.service';
 import { EncodedFrame, FrameType, Size } from '../../data/frames';
 import { PointerInputMessage, PointerStates, ResizeSurfaceMessage } from '../../data/streaming-messages';
@@ -11,6 +11,9 @@ import { CommonModule } from '@angular/common';
   styleUrl: './stream-host.component.scss'
 })
 export class StreamHostComponent {
+
+  @Input()
+  public isMenuVisible = true;
 
   @ViewChild("root")
   private _root?: ElementRef<HTMLDivElement>;
@@ -27,7 +30,7 @@ export class StreamHostComponent {
   private _pointerStates: PointerStates = {};
 
   public get IsFullScreenAvailable(): boolean {
-    return document.fullscreenEnabled;
+    return document.fullscreenEnabled && this.isMenuVisible;
   }
 
   public constructor(
