@@ -28,7 +28,7 @@ else {
 }
 
 Write-Host 'Creating npm package...' -ForegroundColor Magenta
-Push-Location ./projects/warpr-lib
+Push-Location ./dist/warpr-lib
 
 if ($env:APPVEYOR) {
   Write-Host 'Publishing npm package...' -ForegroundColor Magenta

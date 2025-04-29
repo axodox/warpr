@@ -9,14 +9,14 @@ namespace Warpr::Messaging
   StreamConnection::StreamConnection(Axodox::Infrastructure::dependency_container* container) :
     MessageReceived(_events),
     _client(container->resolve<WebRtcClient>()),
-    _messageReceivedSubscription(_client->MessageReceived({ this, &StreamConnection::OnMessageReceived }))
+    _messageReceivedSubscription(_client->ControlMessageReceived({ this, &StreamConnection::OnMessageReceived }))
   { }
 
-  void StreamConnection::OnMessageReceived(WebRtcClient* sender, WebRtcMessage message)
+  void StreamConnection::OnMessageReceived(WebRtcClient* sender, const rtc::message_variant* message)
   {
-    if (!holds_alternative<string_view>(message.Data)) return;
+    if (!holds_alternative<string>(*message)) return;
 
-    auto text = get<string_view>(message.Data);
+    auto text = get<string>(*message);
     auto result = try_parse_json<unique_ptr<WarprStreamingMessage>>(text);
     if (!result) return;
 

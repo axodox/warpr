@@ -36,7 +36,8 @@ namespace Warpr::Messaging
   };
 
   WebRtcClient::WebRtcClient(Axodox::Infrastructure::dependency_container* container) :
-    MessageReceived(_events),
+    ControlMessageReceived(_events),
+    AuxMessageReceived(_events),
     _containerRef(container->get_ref()),
     _settings(container->resolve<WarpConfiguration>()),
     _signaler(container->resolve<WebSocketClient>()),
@@ -48,27 +49,12 @@ namespace Warpr::Messaging
     return _peerConnection && _peerConnection->state() == PeerConnection::State::Connected;
   }
 
-  void WebRtcClient::SendMessage(std::span<const uint8_t> bytes, WebRtcChannel channelType)
+  void WebRtcClient::SendVideoFrame(std::span<const uint8_t> bytes)
   {
     lock_guard lock(_mutex);
 
     //If we are not connected then do not send
     if (!IsConnected()) return;
-
-    //Select channel
-    DataChannel* channel = nullptr;
-
-    switch (channelType)
-    {
-    case WebRtcChannel::Reliable:
-      channel = _reliableChannel.get();
-      break;
-    case WebRtcChannel::LowLatency:
-      channel = _lowLatencyChannel.get();
-      break;
-    }
-
-    if (!channel) return;
 
     //Split to fragments and send
     {
@@ -90,7 +76,7 @@ namespace Warpr::Messaging
         stream.write(uint32_t(fragmentIndex++));
         stream.write(bytes.subspan(position, fragmentLength));
 
-        channel->send(reinterpret_cast<const std::byte*>(stream.data()), stream.length());
+        _streamChannel->send(reinterpret_cast<const std::byte*>(stream.data()), stream.length());
         position += fragmentLength;
       }
 
@@ -104,11 +90,25 @@ namespace Warpr::Messaging
     auto now = steady_clock::now();
     if (now - _lastReportingTime > 1s)
     {
-      _logger.log(log_severity::debug, L"Output buffer size: {} bytes", channel->bufferedAmount());
+      _logger.log(log_severity::debug, L"Output buffer size: {} bytes", _streamChannel->bufferedAmount());
       _logger.log(log_severity::debug, L"Output data rate: {} bytes/second", _dataSent);
       _lastReportingTime = now;
       _dataSent = 0;
     }
+  }
+
+  void WebRtcClient::SendControlMessage(const rtc::message_variant& message)
+  {
+    lock_guard lock(_mutex);
+    if (!IsConnected()) return;
+    _controlChannel->send(message);
+  }
+
+  void WebRtcClient::SendAuxMessage(const rtc::message_variant& message)
+  {
+    lock_guard lock(_mutex);
+    if (!IsConnected()) return;
+    _auxChannel->send(message);
   }
 
   void WebRtcClient::OnSignalingMessageReceived(WebSocketClient* sender, const WarprSignalingMessage* message)
@@ -168,8 +168,9 @@ namespace Warpr::Messaging
         lock_guard lock(_mutex);
 
         //Reset existing connection
-        _lowLatencyChannel.reset();
-        _reliableChannel.reset();
+        _auxChannel.reset();
+        _controlChannel.reset();
+        _streamChannel.reset();
         _peerConnection.reset();
 
         //Create configuration
@@ -210,19 +211,20 @@ namespace Warpr::Messaging
           });
 
         //Create data channel
-        _reliableChannel = _peerConnection->createDataChannel("reliable");
-        _lowLatencyChannel = _peerConnection->createDataChannel("low_latency", {
+        _streamChannel = _peerConnection->createDataChannel("stream", {
           .reliability = {
             .unordered = true,
             .maxRetransmits = 0
           }
           });
+        _controlChannel = _peerConnection->createDataChannel("control");
+        _auxChannel = _peerConnection->createDataChannel("aux");
 
-        _reliableChannel->onMessage([=](message_variant data) {
-          OnMessageReceived(WebRtcChannel::Reliable, data);
+        _controlChannel->onMessage([=](message_variant data) {
+          _events.raise(ControlMessageReceived, this, &data);
           });
-        _lowLatencyChannel->onMessage([=](message_variant data) {
-          OnMessageReceived(WebRtcChannel::LowLatency, data);
+        _auxChannel->onMessage([=](message_variant data) {
+          _events.raise(AuxMessageReceived, this, &data);
           });
       }
 
@@ -231,22 +233,5 @@ namespace Warpr::Messaging
 
       _logger.log(log_severity::warning, "Failed to connect, retrying...");
     }
-  }
-
-  void WebRtcClient::OnMessageReceived(WebRtcChannel channel, rtc::message_variant message)
-  {
-    WebRtcMessage eventArgs{ .Channel = channel };
-    switch (message.index())
-    {
-    case 0:
-      eventArgs.Data = reinterpret_cast<vector<uint8_t>&>(get<binary>(message));
-      break;
-    case 1:
-      eventArgs.Data = get<string>(message);
-      break;
-    default:
-      throw logic_error("Data channel not implemented.");
-    }
-    _events.raise(MessageReceived, this, eventArgs);
   }
 }

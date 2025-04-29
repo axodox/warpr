@@ -72,6 +72,6 @@ namespace Warpr::Core
     message.write(frame.Width);
     message.write(frame.Height);
     message.write(frame.Bytes);
-    _webRtcClient->SendMessage(message, WebRtcChannel::LowLatency);
+    _webRtcClient->SendVideoFrame(message);
   }
 }
