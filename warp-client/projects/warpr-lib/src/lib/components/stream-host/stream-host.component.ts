@@ -15,9 +15,6 @@ export class StreamHostComponent {
   @Input()
   public isMenuVisible = true;
 
-  @ViewChild("root")
-  private _root?: ElementRef<HTMLDivElement>;
-
   @ViewChild("renderTarget")
   private _canvas?: ElementRef<HTMLCanvasElement>;
   private _renderingContext: CanvasRenderingContext2D | null = null;
@@ -34,10 +31,11 @@ export class StreamHostComponent {
   }
 
   public constructor(
-    private _streamingService: StreamingService) {
+    private _streamingService: StreamingService,
+    private _root: ElementRef<HTMLDivElement>) {
     this._streamingService.Connected.Subscribe((sender, eventArgs) => this.OnConnected());
     this._streamingService.FrameReceived.Subscribe((sender, eventArgs) => this.OnFrameReceived(eventArgs));
-
+    
     this._decoder = new VideoDecoder({
       output: (frame) => this.OnFrameDecoded(frame),
       error: (error) => console.log(error)
