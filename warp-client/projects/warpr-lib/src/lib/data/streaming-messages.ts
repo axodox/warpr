@@ -1,6 +1,7 @@
 export enum WarprStreamingMessageType {
   PointerInputMessage = "PointerInputMessage",
-  ResizeSurfaceMessage = "ResizeSurfaceMessage"
+  ResizeSurfaceMessage = "ResizeSurfaceMessage",
+  RequestKeyFrameMessage = "RequestKeyFrameMessage",
 }
 
 export type Point = {
@@ -131,6 +132,11 @@ export class ResizeSurfaceMessage {
   ) { }
 }
 
+export class RequestKeyFrameMessage {
+  public readonly $type = WarprStreamingMessageType.RequestKeyFrameMessage;
+}
+
 export type WarprStreamingMessage =
   PointerInputMessage |
-  ResizeSurfaceMessage;
+  ResizeSurfaceMessage |
+  RequestKeyFrameMessage;

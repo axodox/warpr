@@ -17,14 +17,11 @@ namespace Warpr::Capture
 
     FrameSource* Source() const;
 
+    void ResizeSurface(uint32_t width, uint32_t height);
+
   private:
-    std::shared_ptr<Messaging::StreamConnection> _connection;
     std::unique_ptr<FrameSource> _source;
 
-    Axodox::Infrastructure::event_subscription _messageReceivedSubscription;
-
     void OnFrameArrived(FrameSource* sender, const Frame& eventArgs);
-
-    void OnMessageReceived(Messaging::StreamConnection* sender, const Messaging::WarprStreamingMessage* eventArgs);
   };
 }

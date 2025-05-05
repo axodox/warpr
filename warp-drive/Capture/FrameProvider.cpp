@@ -9,9 +9,7 @@ using namespace Warpr::Messaging;
 namespace Warpr::Capture
 {
   FrameProvider::FrameProvider(Axodox::Infrastructure::dependency_container* container) :
-    FrameArrived(_events),
-    _connection(container->resolve<StreamConnection>()),
-    _messageReceivedSubscription(_connection->MessageReceived({ this, &FrameProvider::OnMessageReceived }))
+    FrameArrived(_events)
   {
     _logger.log(log_severity::information, "Creating frame source...");
 
@@ -30,19 +28,14 @@ namespace Warpr::Capture
     return _source.get();
   }
 
+  void FrameProvider::ResizeSurface(uint32_t width, uint32_t height)
+  {
+    if (!_source || width == 0 || height == 0) return;
+    _source->Resize(width, height);
+  }
+
   void FrameProvider::OnFrameArrived(FrameSource* sender, const Frame& eventArgs)
   {
     _events.raise(FrameArrived, sender, eventArgs);
-  }
-
-  void FrameProvider::OnMessageReceived(StreamConnection* sender, const WarprStreamingMessage* eventArgs)
-  {
-    if (!_source || eventArgs->Type() != WarprStreamingMessageType::ResizeSurfaceMessage) return;
-
-    auto message = static_cast<const ResizeSurfaceMessage*>(eventArgs);
-    if (*message->Width > 0 && *message->Height > 0)
-    {
-      _source->Resize(*message->Width, *message->Height);
-    }
   }
 }

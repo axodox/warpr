@@ -8,7 +8,8 @@ namespace Warpr::Messaging
 {
   Axodox::Infrastructure::type_registry<WarprStreamingMessage> WarprStreamingMessage::derived_types = type_registry<WarprStreamingMessage>::create<
     PointerInputMessage,
-    ResizeSurfaceMessage>();
+    ResizeSurfaceMessage,
+    RequestKeyFrameMessage>();
 
   Point::Point() :
     X(this, "X"),
@@ -50,5 +51,10 @@ namespace Warpr::Messaging
   WarprStreamingMessageType ResizeSurfaceMessage::Type() const
   {
     return WarprStreamingMessageType::ResizeSurfaceMessage;
+  }
+
+  WarprStreamingMessageType RequestKeyFrameMessage::Type() const
+  {
+    return WarprStreamingMessageType::RequestKeyFrameMessage;
   }
 }

@@ -8,9 +8,7 @@ using namespace Warpr::Messaging;
 
 namespace Warpr::Input
 {
-  InputProvider::InputProvider(Axodox::Infrastructure::dependency_container* container) :
-    _connection(container->resolve<StreamConnection>()),
-    _subscription(_connection->MessageReceived({ this, &InputProvider::OnMessageReceived }))
+  InputProvider::InputProvider(Axodox::Infrastructure::dependency_container* container)
   {
     _logger.log(log_severity::information, "Creating input sink...");
 
@@ -25,15 +23,9 @@ namespace Warpr::Input
     return _sink.get();
   }
 
-  void InputProvider::OnMessageReceived(Messaging::StreamConnection* sender, const Messaging::WarprStreamingMessage* message)
+  void InputProvider::PushInput(const PointerInput& input)
   {
     if (!_sink) return;
-
-    switch (message->Type())
-    {
-    case WarprStreamingMessageType::PointerInputMessage:
-      _sink->OnPointerInput(static_cast<const PointerInputMessage*>(message)->ToInput());
-      break;
-    }
+    _sink->OnPointerInput(input);
   }
 }

@@ -1,7 +1,7 @@
 import { Component, ElementRef, Input, ViewChild } from '@angular/core';
 import { StreamingService } from '../../services/streaming.service';
 import { EncodedFrame, FrameType, Size } from '../../data/frames';
-import { PointerInputMessage, PointerStates, ResizeSurfaceMessage } from '../../data/streaming-messages';
+import { PointerInputMessage, PointerStates, RequestKeyFrameMessage, ResizeSurfaceMessage } from '../../data/streaming-messages';
 import { CommonModule } from '@angular/common';
 
 @Component({
@@ -19,7 +19,7 @@ export class StreamHostComponent {
   private _canvas?: ElementRef<HTMLCanvasElement>;
   private _renderingContext: CanvasRenderingContext2D | null = null;
 
-  private _decoder: VideoDecoder;
+  private _decoder: VideoDecoder | null = null;
   private _framePending?: VideoFrame;
   private _videoSize = Size.Empty;
   private _displaySize = Size.Empty;
@@ -35,11 +35,6 @@ export class StreamHostComponent {
     private _root: ElementRef<HTMLDivElement>) {
     this._streamingService.Connected.Subscribe((sender, eventArgs) => this.OnConnected());
     this._streamingService.FrameReceived.Subscribe((sender, eventArgs) => this.OnFrameReceived(eventArgs));
-    
-    this._decoder = new VideoDecoder({
-      output: (frame) => this.OnFrameDecoded(frame),
-      error: (error) => console.log(error)
-    });
   }
 
   private async ngAfterViewInit() {
@@ -98,8 +93,19 @@ export class StreamHostComponent {
     //Initialize decoder
     let frameSize = new Size(frame.Width, frame.Height);
 
-    if (!Size.AreEqual(frameSize, this._videoSize)) {
+    if (this._decoder === null || this._decoder.state === 'closed' || !Size.AreEqual(frameSize, this._videoSize)) {
       console.log("Configuring decoder...");
+
+      if (this._decoder !== null && this._decoder.state !== 'closed') this._decoder.close();
+      this._decoder = new VideoDecoder({
+        output: (frame) => this.OnFrameDecoded(frame),
+        error: (error) => {
+          console.error(error);
+          this._streamingService.SendControlMessage(new RequestKeyFrameMessage());
+        }
+      });
+      this._isDecoderInitialized = false;
+
       this._decoder.configure({
         codec: "hvc1.1.6.L93.B0",
         codedWidth: frame.Width,
@@ -114,7 +120,10 @@ export class StreamHostComponent {
     }
 
     //Decode frame
-    if (!this._isDecoderInitialized && chunk.type != "key") return;
+    if (!this._isDecoderInitialized && chunk.type != "key") {
+      this._streamingService.SendControlMessage(new RequestKeyFrameMessage());
+      return;
+    }
     this._isDecoderInitialized = true;
 
     this._decoder.decode(chunk);

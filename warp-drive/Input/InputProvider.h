@@ -15,12 +15,9 @@ namespace Warpr::Input
 
     InputSink* Sink() const;
 
+    void PushInput(const PointerInput& input);
+
   private:
-    std::shared_ptr<Messaging::StreamConnection> _connection;
-    Axodox::Infrastructure::event_subscription _subscription;
-
     std::unique_ptr<InputSink> _sink;
-
-    void OnMessageReceived(Messaging::StreamConnection* sender, const Messaging::WarprStreamingMessage* message);
   };
 }
