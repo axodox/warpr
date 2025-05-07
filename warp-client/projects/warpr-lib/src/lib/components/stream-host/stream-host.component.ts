@@ -11,6 +11,7 @@ import { CommonModule } from '@angular/common';
   styleUrl: './stream-host.component.scss'
 })
 export class StreamHostComponent {
+  private static readonly _maxFramesInDecodeQueue = 10;
 
   @Input()
   public isMenuVisible = true;
@@ -25,6 +26,7 @@ export class StreamHostComponent {
   private _displaySize = Size.Empty;
   private _isDecoderInitialized = false;
   private _pointerStates: PointerStates = {};
+  private _framesInDecodeQueue = 0;
 
   public get IsFullScreenAvailable(): boolean {
     return document.fullscreenEnabled && this.isMenuVisible;
@@ -93,7 +95,7 @@ export class StreamHostComponent {
     //Initialize decoder
     let frameSize = new Size(frame.Width, frame.Height);
 
-    if (this._decoder === null || this._decoder.state === 'closed' || !Size.AreEqual(frameSize, this._videoSize)) {
+    if (this._decoder === null || this._decoder.state === 'closed' || !Size.AreEqual(frameSize, this._videoSize) || this._framesInDecodeQueue > StreamHostComponent._maxFramesInDecodeQueue) {
       console.log("Configuring decoder...");
 
       if (this._decoder !== null && this._decoder.state !== 'closed') this._decoder.close();
@@ -117,6 +119,7 @@ export class StreamHostComponent {
       console.log(`Resolution is ${frame.Width} x ${frame.Height}.`);
 
       this._videoSize = frameSize;
+      this._framesInDecodeQueue = 0;
     }
 
     //Decode frame
@@ -127,9 +130,12 @@ export class StreamHostComponent {
     this._isDecoderInitialized = true;
 
     this._decoder.decode(chunk);
+    this._framesInDecodeQueue++;
   }
 
   private OnFrameDecoded(frame: VideoFrame) {
+    this._framesInDecodeQueue--;
+
     if (this._framePending) this._framePending.close();
     this._framePending = frame;
     requestAnimationFrame(() => this.RenderFrame());
