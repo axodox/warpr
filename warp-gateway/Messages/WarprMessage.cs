@@ -1,4 +1,5 @@
 ﻿using System.Text.Json.Serialization;
+using Warpr.Configuration;
 
 namespace Warpr.Gateway.Messages
 {
@@ -25,6 +26,10 @@ namespace Warpr.Gateway.Messages
     public string[] IceServers { get; init; } = [];
 
     public float ConnectionTimeout { get; init; }
+
+    public DataChannelReliability StreamChannelReliability { get; init; } = new DataChannelReliability();
+
+    public VideoQualityOptions VideoQuality { get; init; } = new VideoQualityOptions();
   }
 
   public class PeerConnectionDescriptionMessage : WarprMessage

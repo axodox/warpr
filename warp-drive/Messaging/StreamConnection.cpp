@@ -9,10 +9,10 @@ namespace Warpr::Messaging
   StreamConnection::StreamConnection(Axodox::Infrastructure::dependency_container* container) :
     MessageReceived(_events),
     _client(container->resolve<WebRtcClient>()),
-    _messageReceivedSubscription(_client->ControlMessageReceived({ this, &StreamConnection::OnMessageReceived }))
+    _messageReceivedSubscription(_client->ControlMessageReceived({ this, &StreamConnection::OnStreamingMessageReceived }))
   { }
 
-  void StreamConnection::OnMessageReceived(WebRtcClient* sender, const rtc::message_variant* message)
+  void StreamConnection::OnStreamingMessageReceived(WebRtcClient* sender, const rtc::message_variant* message)
   {
     if (!holds_alternative<string>(*message)) return;
 

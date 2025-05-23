@@ -14,15 +14,22 @@ namespace Warpr::Encoder
   {
     _logger.log(log_severity::information, "Initializing...");
 
-    auto configuration = container->resolve<WarpConfiguration>();
-    _resolutionScale = configuration->ResolutionScale;
-
     auto device = container->resolve<GraphicsDevice>();
     _device = device->Device();
     _videoDevice = _device.as<ID3D11VideoDevice>();
     _context = device->Context().as<ID3D11VideoContext>();
 
     _logger.log(log_severity::information, "Initialized.");
+  }
+
+  float VideoPreprocessor::ResolutionScale() const
+  {
+    return _resolutionScale;
+  }
+
+  void VideoPreprocessor::ResolutionScale(float value)
+  {
+    _resolutionScale = value;
   }
 
   void VideoPreprocessor::ProcessFrame(Capture::Frame& frame)
@@ -39,8 +46,8 @@ namespace Warpr::Encoder
         .FourCC = 0,
         .ViewDimension = D3D11_VPIV_DIMENSION_TEXTURE2D,
         .Texture2D = {
-          .MipSlice = 0, 
-          .ArraySlice = 0 
+          .MipSlice = 0,
+          .ArraySlice = 0
         }
       };
 
@@ -73,7 +80,11 @@ namespace Warpr::Encoder
     D3D11_TEXTURE2D_DESC description;
     frame->GetDesc(&description);
 
-    return TargetProperties{ description.Width, description.Height };
+    return TargetProperties{
+      .Width = description.Width,
+      .Height = description.Height,
+      .ResolutionScale = _resolutionScale 
+    };
   }
 
   void VideoPreprocessor::EnsureTargets(const TargetProperties& targetProperties)
@@ -84,8 +95,8 @@ namespace Warpr::Encoder
     _logger.log(log_severity::information, "Allocating resources...");
 
     //Calculate output resolution
-    auto width = max(256u, MakeEven(uint32_t(targetProperties.Width * _resolutionScale)));
-    auto height = max(256u, MakeEven(uint32_t(targetProperties.Height * _resolutionScale)));
+    auto width = max(256u, MakeEven(uint32_t(targetProperties.Width * _targetProperties.ResolutionScale)));
+    auto height = max(256u, MakeEven(uint32_t(targetProperties.Height * _targetProperties.ResolutionScale)));
 
     //Create video processor enumerator
     {
@@ -122,7 +133,7 @@ namespace Warpr::Encoder
         .Format = DXGI_FORMAT_NV12,
         .SampleDesc = {
           .Count = 1,
-          .Quality = 0 
+          .Quality = 0
         },
         .Usage = D3D11_USAGE_DEFAULT,
         .BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE,
@@ -138,7 +149,7 @@ namespace Warpr::Encoder
       D3D11_VIDEO_PROCESSOR_OUTPUT_VIEW_DESC description{
         .ViewDimension = D3D11_VPOV_DIMENSION_TEXTURE2D,
         .Texture2D = {
-          .MipSlice = 0 
+          .MipSlice = 0
         }
       };
 

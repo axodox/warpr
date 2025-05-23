@@ -153,6 +153,9 @@ namespace Warpr::Messaging
     {
       _configuration.IceServers.emplace_back(server);
     }
+    _configuration.IsConnectionUnordered = *message->StreamChannelReliability->IsUnordered;
+    _configuration.MaxRetransmits = *message->StreamChannelReliability->MaxRetransmits;
+    _configuration.MaxPacketLifetime = *message->StreamChannelReliability->MaxPacketLifetime;
 
     _connectionThread.reset();
     _connectionThread = background_thread({ this, &WebRtcClient::Connect }, "* webrtc connect");
@@ -213,8 +216,9 @@ namespace Warpr::Messaging
         //Create data channel
         _streamChannel = _peerConnection->createDataChannel("stream", {
           .reliability = {
-            .unordered = true,
-            .maxRetransmits = 0
+            .unordered = _configuration.IsConnectionUnordered,
+            .maxPacketLifeTime = _configuration.MaxPacketLifetime,
+            .maxRetransmits = _configuration.MaxRetransmits
           }
           });
         _controlChannel = _peerConnection->createDataChannel("control");

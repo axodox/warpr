@@ -13,6 +13,10 @@ namespace Warpr::Messaging
     {
       std::vector<rtc::IceServer> IceServers;
       std::chrono::duration<float> ConnectionTimeout;
+
+      bool IsConnectionUnordered;
+      std::optional<uint32_t> MaxRetransmits;
+      std::optional<std::chrono::milliseconds> MaxPacketLifetime;
     };
 
   public:

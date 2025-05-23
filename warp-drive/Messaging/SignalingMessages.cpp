@@ -24,15 +24,34 @@ namespace Warpr::Messaging
     return WarprSignalingMessageType::ConnectionRequest;
   }
 
+  DataChannelReliability::DataChannelReliability() :
+    IsUnordered(this, "IsUnordered", true),
+    MaxRetransmits(this, "MaxRetransmits", 0),
+    MaxPacketLifetime(this, "MaxPacketLifetime", nullopt)
+  { }
+
+  VideoQualityOptions::VideoQualityOptions() :
+    Bitrate(this, "Bitrate", 12'800'000),
+    RenderingResolutionScale(this, "RenderingResolutionScale", 1.f),
+    StreamingResolutionScale(this, "StreamingResolutionScale", 1.f)
+  { }
+
+  PairingCompleteMessage::PairingCompleteMessage() :
+    IceServers(this, "IceServers"),
+    ConnectionTimeout(this, "ConnectionTimeout"),
+    StreamChannelReliability(this, "StreamChannelReliability"),
+    VideoQuality(this, "VideoQuality")
+  { }
+
   WarprSignalingMessageType PairingCompleteMessage::Type() const
   {
     return WarprSignalingMessageType::PairingCompleteMessage;
   }
 
-  PairingCompleteMessage::PairingCompleteMessage() :
-    IceServers(this, "IceServers"),
-    ConnectionTimeout(this, "ConnectionTimeout")
-  { }
+  WarprSignalingMessageType PeerConnectionCandidateMessage::Type() const
+  {
+    return WarprSignalingMessageType::PeerConnectionCandidateMessage;
+  }
 
   PeerConnectionDescriptionMessage::PeerConnectionDescriptionMessage() :
     Description(this, "Description")
@@ -46,9 +65,4 @@ namespace Warpr::Messaging
   PeerConnectionCandidateMessage::PeerConnectionCandidateMessage() :
     Candidate(this, "Candidate")
   { }
-
-  WarprSignalingMessageType PeerConnectionCandidateMessage::Type() const
-  {
-    return WarprSignalingMessageType::PeerConnectionCandidateMessage;
-  }
 }

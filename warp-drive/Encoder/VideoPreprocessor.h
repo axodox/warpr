@@ -10,11 +10,16 @@ namespace Warpr::Encoder
     struct TargetProperties
     {
       uint32_t Width = 0, Height = 0;
+      float ResolutionScale = 1.f;
+
       bool operator==(const TargetProperties&) const = default;
     };
 
   public:
     VideoPreprocessor(Axodox::Infrastructure::dependency_container* container);
+
+    float ResolutionScale() const;
+    void ResolutionScale(float value);
 
     void ProcessFrame(Capture::Frame& frame);
 

@@ -28,12 +28,16 @@ namespace Warpr::Encoder
     struct EncoderProperties
     {
       uint32_t Width = 0, Height = 0;
+      uint32_t Bitrate = 0;
       bool operator==(const EncoderProperties&) const = default;
     };
 
   public:
     VideoEncoder(Axodox::Infrastructure::dependency_container* container);
     ~VideoEncoder();
+
+    uint32_t Bitrate() const;
+    void Bitrate(uint32_t value);
 
     EncodedFrame EncodeFrame(const Capture::Frame& frame, bool forceIdrFrame = false);
 
@@ -47,6 +51,8 @@ namespace Warpr::Encoder
     void* _outputBuffer = nullptr;
     uint32_t _frameIndex = 0u;
     EncoderProperties _encoderProperties{};
+
+    uint32_t _bitrate = 12'800'000;
 
     EncoderProperties GetEncoderProperties(const Capture::Frame& frame);
     void EnsureEncoder(const EncoderProperties& properties);

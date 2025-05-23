@@ -20,7 +20,8 @@ namespace Warpr::Core
     _videoEncoder(container->resolve<VideoEncoder>()),
     _webRtcClient(container->resolve<WebRtcClient>()),
     _connection(container->resolve<StreamConnection>()),
-    _messageReceivedSubscription(_connection->MessageReceived({ this, &WarpSession::OnMessageReceived })),
+    _webSocketClient(container->resolve<WebSocketClient>()),
+    _messageReceivedSubscription(_connection->MessageReceived({ this, &WarpSession::OnStreamingMessageReceived })),
     _frameArrivedSubscription(_frameProvider->FrameArrived({ this, &WarpSession::OnFrameArrived }))
   { }
 
@@ -77,7 +78,7 @@ namespace Warpr::Core
     _webRtcClient->SendVideoFrame(message);
   }
 
-  void WarpSession::OnMessageReceived(Messaging::StreamConnection* sender, const Messaging::WarprStreamingMessage* message)
+  void WarpSession::OnStreamingMessageReceived(Messaging::StreamConnection* sender, const Messaging::WarprStreamingMessage* message)
   {
     switch (message->Type())
     {
@@ -100,13 +101,30 @@ namespace Warpr::Core
 
   void WarpSession::OnResizeSurfaceMessage(const Messaging::ResizeSurfaceMessage* message)
   {
-    _logger.log(log_severity::information, "Surface resize requested to {}x{}.", *message->Width, *message->Height);
-    _frameProvider->ResizeSurface(*message->Width, *message->Height);
+    _logger.log(log_severity::information, "Surface resize requested to {}x{} (scale is {:.2f}).", *message->Width, *message->Height, _renderingResolutionScale);
+    _frameProvider->ResizeSurface(uint32_t(*message->Width * _renderingResolutionScale), uint32_t(*message->Height * _renderingResolutionScale));
   }
 
   void WarpSession::OnRequestKeyFrameMessage(const Messaging::RequestKeyFrameMessage* message)
   {
     _logger.log(log_severity::information, "Key frame requested.");
     _isKeyFrameSent = false;
+  }
+
+  void WarpSession::OnSignalingMessageReceived(Messaging::WebSocketClient* sender, const Messaging::WarprSignalingMessage* message)
+  {
+    switch (message->Type())
+    {
+    case WarprSignalingMessageType::PairingCompleteMessage:
+      OnPairingCompleteMessage(static_cast<const PairingCompleteMessage*>(message));
+      break;
+    }
+  }
+
+  void WarpSession::OnPairingCompleteMessage(const Messaging::PairingCompleteMessage* message)
+  {
+    _renderingResolutionScale = *message->VideoQuality->RenderingResolutionScale;
+    _videoPreprocessor->ResolutionScale(*message->VideoQuality->StreamingResolutionScale);
+    _videoEncoder->Bitrate(*message->VideoQuality->Bitrate);
   }
 }

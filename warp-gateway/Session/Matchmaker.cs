@@ -24,7 +24,9 @@ namespace Warpr.Gateway.Session
 
       var message = new PairingCompleteMessage() {
         ConnectionTimeout = configuration.ConnectionTimeout,
-        IceServers = configuration.IceServers.ToArray() 
+        IceServers = configuration.IceServers.ToArray(),
+        StreamChannelReliability = configuration.StreamChannelReliability,
+        VideoQuality = configuration.VideoQuality
       };
       source.SendMessage(message);
       sink.SendMessage(message);

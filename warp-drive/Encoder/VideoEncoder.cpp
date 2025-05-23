@@ -53,6 +53,16 @@ namespace Warpr::Encoder
     ReleaseResources();
   }
 
+  uint32_t VideoEncoder::Bitrate() const
+  {
+    return _bitrate;
+  }
+
+  void VideoEncoder::Bitrate(uint32_t value)
+  {
+    _bitrate = value;
+  }
+
   EncodedFrame VideoEncoder::EncodeFrame(const Capture::Frame& frame, bool forceIdrFrame)
   {
     Stopwatch watch{ "Frame encode" };
@@ -149,7 +159,8 @@ namespace Warpr::Encoder
 
     return {
       .Width = description.Width,
-      .Height = description.Height
+      .Height = description.Height,
+      .Bitrate = _bitrate
     };
   }
 
@@ -187,7 +198,7 @@ namespace Warpr::Encoder
 
       encodeConfig.rcParams.rateControlMode = NV_ENC_PARAMS_RC_CBR;
       encodeConfig.rcParams.zeroReorderDelay = 1;
-      encodeConfig.rcParams.averageBitRate = 2 * 6400000;
+      encodeConfig.rcParams.averageBitRate = encoderProperties.Bitrate;
       //encodeConfig.rcParams.vbvBufferSize = 0;
       //encodeConfig.rcParams.vbvInitialDelay = 0;
       //encodeConfig.rcParams.maxBitRate = 2500;

@@ -18,6 +18,6 @@ namespace Warpr::Messaging
     std::shared_ptr<WebRtcClient> _client;
     Axodox::Infrastructure::event_subscription _messageReceivedSubscription;
 
-    void OnMessageReceived(WebRtcClient* sender, const rtc::message_variant* message);
+    void OnStreamingMessageReceived(WebRtcClient* sender, const rtc::message_variant* message);
   };
 }

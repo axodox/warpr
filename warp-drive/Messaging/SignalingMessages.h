@@ -27,14 +27,34 @@ namespace Warpr::Messaging
     virtual WarprSignalingMessageType Type() const override;
   };
 
+  struct DataChannelReliability : public Axodox::Json::json_object_base
+  {
+    Axodox::Json::json_property<bool> IsUnordered;
+    Axodox::Json::json_property<std::optional<uint32_t>> MaxRetransmits;
+    Axodox::Json::json_property<std::optional<std::chrono::milliseconds>> MaxPacketLifetime;
+
+    DataChannelReliability();
+  };
+
+  struct VideoQualityOptions : public Axodox::Json::json_object_base
+  {
+    Axodox::Json::json_property<uint32_t> Bitrate;
+    Axodox::Json::json_property<float> RenderingResolutionScale;
+    Axodox::Json::json_property<float> StreamingResolutionScale;
+
+    VideoQualityOptions();
+  };
+
   struct PairingCompleteMessage : public WarprSignalingMessage
   {
-    virtual WarprSignalingMessageType Type() const override;
+    Axodox::Json::json_property<std::vector<std::string>> IceServers;
+    Axodox::Json::json_property<float> ConnectionTimeout;
+    Axodox::Json::json_property<DataChannelReliability> StreamChannelReliability;
+    Axodox::Json::json_property<VideoQualityOptions> VideoQuality;
 
     PairingCompleteMessage();
 
-    Axodox::Json::json_property<std::vector<std::string>> IceServers;
-    Axodox::Json::json_property<float> ConnectionTimeout;
+    virtual WarprSignalingMessageType Type() const override;
   };
 
   struct PeerConnectionDescriptionMessage : public WarprSignalingMessage

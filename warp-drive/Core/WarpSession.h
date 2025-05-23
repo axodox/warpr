@@ -4,6 +4,7 @@
 #include "Encoder/VideoPreprocessor.h"
 #include "Encoder/VideoEncoder.h"
 #include "Messaging/WebRtcClient.h"
+#include "Messaging/WebSocketClient.h"
 #include "Input/InputProvider.h"
 
 namespace Warpr::Core
@@ -25,10 +26,12 @@ namespace Warpr::Core
     std::shared_ptr<Encoder::VideoEncoder> _videoEncoder;
     std::shared_ptr<Messaging::WebRtcClient> _webRtcClient;
     std::shared_ptr<Messaging::StreamConnection> _connection;
+    std::shared_ptr<Messaging::WebSocketClient> _webSocketClient;
 
     bool _isKeyFrameSent = false;
     std::chrono::steady_clock::time_point _lastStateTime = {}, _lastFrameTime = {};
     uint32_t _frameCount = 0;
+    float _renderingResolutionScale = 1.f;
 
     Axodox::Infrastructure::event_subscription _messageReceivedSubscription;
     Axodox::Infrastructure::event_subscription _frameArrivedSubscription;
@@ -37,9 +40,12 @@ namespace Warpr::Core
 
     void SendFrame(const Encoder::EncodedFrame& frame);
 
-    void OnMessageReceived(Messaging::StreamConnection* sender, const Messaging::WarprStreamingMessage* message);
+    void OnStreamingMessageReceived(Messaging::StreamConnection* sender, const Messaging::WarprStreamingMessage* message);
     void OnPointerInputMessage(const Messaging::PointerInputMessage* message);
     void OnResizeSurfaceMessage(const Messaging::ResizeSurfaceMessage* message);
     void OnRequestKeyFrameMessage(const Messaging::RequestKeyFrameMessage* message);
+
+    void OnSignalingMessageReceived(Messaging::WebSocketClient* sender, const Messaging::WarprSignalingMessage* message);
+    void OnPairingCompleteMessage(const Messaging::PairingCompleteMessage* message);
   };
 }
