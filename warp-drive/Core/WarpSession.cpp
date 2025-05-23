@@ -21,7 +21,8 @@ namespace Warpr::Core
     _webRtcClient(container->resolve<WebRtcClient>()),
     _connection(container->resolve<StreamConnection>()),
     _webSocketClient(container->resolve<WebSocketClient>()),
-    _messageReceivedSubscription(_connection->MessageReceived({ this, &WarpSession::OnStreamingMessageReceived })),
+    _streamingMessageReceivedSubscription(_connection->MessageReceived({ this, &WarpSession::OnStreamingMessageReceived })),
+    _signalingMessageReceivedSubscription(_webSocketClient->MessageReceived({ this, &WarpSession::OnSignalingMessageReceived })),
     _frameArrivedSubscription(_frameProvider->FrameArrived({ this, &WarpSession::OnFrameArrived }))
   { }
 
@@ -96,7 +97,10 @@ namespace Warpr::Core
 
   void WarpSession::OnPointerInputMessage(const Messaging::PointerInputMessage* message)
   {
-    _inputProvider->PushInput(message->ToInput());
+    auto input = message->ToInput();
+    input.X /= _videoPreprocessor->ResolutionScale();
+    input.Y /= _videoPreprocessor->ResolutionScale();
+    _inputProvider->PushInput(input);
   }
 
   void WarpSession::OnResizeSurfaceMessage(const Messaging::ResizeSurfaceMessage* message)

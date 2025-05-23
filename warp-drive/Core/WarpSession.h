@@ -33,7 +33,8 @@ namespace Warpr::Core
     uint32_t _frameCount = 0;
     float _renderingResolutionScale = 1.f;
 
-    Axodox::Infrastructure::event_subscription _messageReceivedSubscription;
+    Axodox::Infrastructure::event_subscription _streamingMessageReceivedSubscription;
+    Axodox::Infrastructure::event_subscription _signalingMessageReceivedSubscription;
     Axodox::Infrastructure::event_subscription _frameArrivedSubscription;
 
     void OnFrameArrived(Capture::FrameSource* sender, const Capture::Frame& eventArgs);

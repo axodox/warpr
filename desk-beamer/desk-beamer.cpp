@@ -12,7 +12,6 @@ int main()
 
   WarpConfiguration configuration{
    .FrameSource = make_unique<WindowSourceDescription>(DisplayServices::FindAll().front()),
-   .ResolutionScale = 0.5f,
    .MinimumFrameInterval = 12ms
   };
 
