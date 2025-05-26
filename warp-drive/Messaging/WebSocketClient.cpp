@@ -4,6 +4,7 @@
 using namespace Axodox::Infrastructure;
 using namespace Axodox::Json;
 using namespace Axodox::Threading;
+using namespace rtc;
 using namespace std;
 using namespace std::string_literals;
 
@@ -13,7 +14,8 @@ namespace Warpr::Messaging
     Connected(_events),
     MessageReceived(_events),
     Disconnected(_events),
-    _settings(container->resolve<WarpConfiguration>())
+    _settings(container->resolve<WarpConfiguration>()),
+    _socket(WebSocketConfiguration{ .disableTlsVerification = true })
   {
     //Connected
     _socket.onOpen([=] {
