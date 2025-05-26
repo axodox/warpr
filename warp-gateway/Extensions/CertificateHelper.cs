@@ -6,6 +6,12 @@ using System.Security.Cryptography.X509Certificates;
 
 namespace Warpr.Gateway.Extensions
 {
+  public class CertificateOptions
+  {
+    public List<string> AdditionalDnsNames { get; } = [];
+    public List<IPAddress> AdditionalIPAddresses { get; } = [];
+  }
+
   public static class CertificateHelper
   {
     private static T? TryGet<T>(Func<T> function)
@@ -32,7 +38,7 @@ namespace Warpr.Gateway.Extensions
       return certificateRequest.CreateSelfSigned(validFrom, validUntil);
     }
 
-    public static X509Certificate2 Create(string subjectName, X509Certificate2? parentCertificate = null)
+    public static X509Certificate2 Create(string subjectName, X509Certificate2? parentCertificate = null, CertificateOptions? certificateOptions = null)
     {
       using var privateKey = RSA.Create(2048);
       var certificateRequest = new CertificateRequest($"CN={subjectName}", privateKey, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
@@ -48,14 +54,30 @@ namespace Warpr.Gateway.Extensions
           false));
 
       var alternativeNameBuilder = new SubjectAlternativeNameBuilder();
+
       foreach (var name in GetDnsNames())
       {
         alternativeNameBuilder.AddDnsName(name);
       }
+
       foreach (var address in GetIPAddresses())
       {
         alternativeNameBuilder.AddIpAddress(address);
       }
+
+      if (certificateOptions != null)
+      {
+        foreach (var name in certificateOptions.AdditionalDnsNames)
+        {
+          alternativeNameBuilder.AddDnsName(name);
+        }
+
+        foreach (var address in certificateOptions.AdditionalIPAddresses)
+        {
+          alternativeNameBuilder.AddIpAddress(address);
+        }
+      }
+
       certificateRequest.CertificateExtensions.Add(alternativeNameBuilder.Build());
 
       var validFrom = DateTimeOffset.UtcNow.AddDays(-1);
@@ -73,7 +95,7 @@ namespace Warpr.Gateway.Extensions
       }
     }
 
-    public static bool Validate(X509Certificate2 certificate2)
+    public static bool Validate(X509Certificate2 certificate2, CertificateOptions? certificateOptions = null)
     {
       if (DateTime.UtcNow > certificate2.NotAfter) return false;
 
@@ -91,6 +113,19 @@ namespace Warpr.Gateway.Extensions
       foreach (var address in GetIPAddresses())
       {
         if (!alternateNames.Contains(address.ToString(), StringComparison.InvariantCultureIgnoreCase)) return false;
+      }
+
+      if (certificateOptions != null)
+      {
+        foreach (var name in certificateOptions.AdditionalDnsNames)
+        {
+          if (!alternateNames.Contains(name, StringComparison.InvariantCultureIgnoreCase)) return false;
+        }
+
+        foreach (var address in certificateOptions.AdditionalIPAddresses)
+        {
+          if (!alternateNames.Contains(address.ToString(), StringComparison.InvariantCultureIgnoreCase)) return false;
+        }
       }
 
       return true;
