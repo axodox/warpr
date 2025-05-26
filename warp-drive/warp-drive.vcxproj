@@ -150,7 +150,7 @@
   <ImportGroup Label="ExtensionTargets">
     <Import Project="..\packages\nvenc.12.2.72\build\native\nvenc.targets" Condition="Exists('..\packages\nvenc.12.2.72\build\native\nvenc.targets')" />
     <Import Project="..\packages\libdatachannel.0.22.6\build\native\libdatachannel.targets" Condition="Exists('..\packages\libdatachannel.0.22.6\build\native\libdatachannel.targets')" />
-    <Import Project="..\packages\Axodox.Common.1.0.56\build\native\Axodox.Common.targets" Condition="Exists('..\packages\Axodox.Common.1.0.56\build\native\Axodox.Common.targets')" />
+    <Import Project="..\packages\Axodox.Common.1.0.57\build\native\Axodox.Common.targets" Condition="Exists('..\packages\Axodox.Common.1.0.57\build\native\Axodox.Common.targets')" />
   </ImportGroup>
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>
@@ -158,6 +158,6 @@
     </PropertyGroup>
     <Error Condition="!Exists('..\packages\nvenc.12.2.72\build\native\nvenc.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\nvenc.12.2.72\build\native\nvenc.targets'))" />
     <Error Condition="!Exists('..\packages\libdatachannel.0.22.6\build\native\libdatachannel.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\libdatachannel.0.22.6\build\native\libdatachannel.targets'))" />
-    <Error Condition="!Exists('..\packages\Axodox.Common.1.0.56\build\native\Axodox.Common.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Axodox.Common.1.0.56\build\native\Axodox.Common.targets'))" />
+    <Error Condition="!Exists('..\packages\Axodox.Common.1.0.57\build\native\Axodox.Common.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Axodox.Common.1.0.57\build\native\Axodox.Common.targets'))" />
   </Target>
 </Project>
