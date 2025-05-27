@@ -23,7 +23,7 @@ export function GetConfiguration(iceServers?: string[]): RTCConfiguration {
   result.iceServers = new Array<RTCIceServer>();
 
   if (iceServers) {
-    let regex = /^(?<protocol>stun|turn):(?:(?<username>\w+):(?<password>\w+)@)?(?<url>[\w\.:?=&]+)$/im;
+    let regex = /^(?<protocol>stun|turn):(?:(?<username>\w+):(?<password>\w+)@)?(?<url>[\w\.\-:?=&]+)$/im;
     for (let server of iceServers) {
       let match = regex.exec(server);
       if (!match || !match.groups) {
