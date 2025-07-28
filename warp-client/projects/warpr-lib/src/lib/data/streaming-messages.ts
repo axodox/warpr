@@ -35,6 +35,7 @@ export enum PointerFlags {
 
 export class PointerState {
   public Buttons = 0;
+  public Position: Point = { X: 0, Y: 0 };
 }
 
 export type PointerStates = { [key: number]: PointerState };
@@ -58,6 +59,7 @@ export class PointerInputMessage {
     }
 
     this.Id = event.pointerId;
+    let position: Point = { X: event.x, Y: event.y };
 
     switch (event.pointerType) {
       case "mouse":
@@ -88,6 +90,7 @@ export class PointerInputMessage {
         break;
       case "wheel":
         this.Action = PointerAction.WheelChanged;
+        position = state.Position;
         break;
     }
 
@@ -96,12 +99,14 @@ export class PointerInputMessage {
     if (state.Buttons & 4) this.Flags |= PointerFlags.RightButton;
     if (wheelDelta != 0) this.Flags |= PointerFlags.Wheel;
     if (target.hasPointerCapture(event.pointerId)) this.Flags |= PointerFlags.Captured;
-    
-    this.Position = PointerInputMessage.GetRemotePosition(event, target);
+
+    this.Position = PointerInputMessage.GetRemotePosition(position, target);
     this.WheelDelta = -wheelDelta;
+
+    state.Position = position;
   }
 
-  private static GetRemotePosition(event: PointerEvent, target: HTMLCanvasElement): Point {
+  private static GetRemotePosition(position: Point, target: HTMLCanvasElement): Point {
     let offsetX = 0;
     let offsetY = 0;
     let scale = 1;
@@ -117,8 +122,8 @@ export class PointerInputMessage {
     }
 
     return {
-      X: (event.x - offsetX) * scale,
-      Y: (event.y - offsetY) * scale
+      X: (position.X - offsetX) * scale,
+      Y: (position.Y - offsetY) * scale
     };
   }
 }

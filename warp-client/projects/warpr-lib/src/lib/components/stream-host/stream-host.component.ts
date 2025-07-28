@@ -77,7 +77,7 @@ export class StreamHostComponent {
     //console.log(event);
     event.preventDefault();
 
-    let pointerEvent: PointerEvent = new PointerEvent(event.type, event);
+    let pointerEvent: PointerEvent = new PointerEvent(event.type, { ...event, pointerId: 1 });
     this.OnPointerEvent(pointerEvent, event.deltaY);
   }
 
