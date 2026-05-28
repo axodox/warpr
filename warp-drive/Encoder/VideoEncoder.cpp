@@ -32,7 +32,8 @@ namespace Warpr::Encoder
       check_nvenc(NvEncodeAPIGetMaxSupportedVersion(&version));
       if (currentVersion > version)
       {
-        throw runtime_error("Current Driver Version does not support this NvEncodeAPI version, please upgrade driver");
+        _logger.log(log_severity::error, "Current Driver Version does not support this NvEncodeAPI version, please upgrade driver.");
+        throw runtime_error("Outdated driver encountered.");
       }
     }
 
@@ -40,7 +41,11 @@ namespace Warpr::Encoder
     {
       _nvenc = { NV_ENCODE_API_FUNCTION_LIST_VER };
       check_nvenc(NvEncodeAPICreateInstance(&_nvenc));
-      if (!_nvenc.nvEncOpenEncodeSession) throw runtime_error("EncodeAPI not found");
+      if (!_nvenc.nvEncOpenEncodeSession)
+      {
+        _logger.log(log_severity::error, "EncodeAPI is not supported on this machine.");
+        throw runtime_error("EncodeAPI is not supported.");
+      }
     }
 
     _logger.log(log_severity::information, "NVEnc API ready.");
