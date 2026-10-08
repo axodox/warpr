@@ -15,7 +15,10 @@ namespace Warpr
     Axodox::Infrastructure::event_publisher<WarpDrive*, const rtc::message_variant*> MessageReceived;
     void SendMessage(const rtc::message_variant& message);
 
+    const WarpConfiguration& Configuration() const;
+
   private:
+    std::shared_ptr<WarpConfiguration> _configuration;
     Axodox::Infrastructure::dependency_container _container;
     Axodox::Infrastructure::event_subscription _messageReceivedSubscription;
   };

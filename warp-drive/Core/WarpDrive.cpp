@@ -14,13 +14,14 @@ using namespace std;
 namespace Warpr
 {
   WarpDrive::WarpDrive(const WarpConfiguration& configuration) :
-    MessageReceived(_events)
+    MessageReceived(_events),
+    _configuration(make_shared<WarpConfiguration>(configuration))
   {
     _logger.log(log_severity::information, L"Hello Warpr!");
     _logger.log(log_severity::information, L"Initializing warp drive...");
     InitRtcLogger(configuration.NetworkingLogSeverity);
 
-    _container.add<WarpConfiguration>(make_shared<WarpConfiguration>(configuration));
+    _container.add<WarpConfiguration>(_configuration);
     _container.resolve<WarpSession>();
 
     _messageReceivedSubscription = _container.resolve<WebRtcClient>()->AuxMessageReceived([=](auto, const rtc::message_variant* message) {
@@ -38,6 +39,11 @@ namespace Warpr
   void WarpDrive::SendMessage(const rtc::message_variant& message)
   {
     _container.resolve<WebRtcClient>()->SendAuxMessage(message);
-    
+
+  }
+
+  const WarpConfiguration& WarpDrive::Configuration() const
+  {
+    return *_configuration;
   }
 }
