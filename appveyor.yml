@@ -8,6 +8,8 @@ environment:
     secure: FRgWoOWDue045JOJaaOe5UtkhGLVXp5qkv0uTdhChC8HBxaxRk5hgnqn5hvmMx+M
 build_script:
 - ps: >-
+    .\update_dependencies.ps1
+
     .\build_npm.ps1
 
     .\build_nuget.ps1
