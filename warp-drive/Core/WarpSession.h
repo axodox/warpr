@@ -45,6 +45,7 @@ namespace Warpr::Core
     void OnPointerInputMessage(const Messaging::PointerInputMessage* message);
     void OnResizeSurfaceMessage(const Messaging::ResizeSurfaceMessage* message);
     void OnRequestKeyFrameMessage(const Messaging::RequestKeyFrameMessage* message);
+    void OnVideoCodecPreferenceMessage(const Messaging::VideoCodecPreferenceMessage* message);
 
     void OnSignalingMessageReceived(Messaging::WebSocketClient* sender, const Messaging::WarprSignalingMessage* message);
     void OnPairingCompleteMessage(const Messaging::PairingCompleteMessage* message);

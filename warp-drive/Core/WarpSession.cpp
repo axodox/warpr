@@ -75,6 +75,7 @@ namespace Warpr::Core
     message.write(frame.Index);
     message.write(frame.Width);
     message.write(frame.Height);
+    message.write(uint32_t(frame.Codec));
     message.write(frame.Bytes);
     _webRtcClient->SendVideoFrame(message);
   }
@@ -91,6 +92,9 @@ namespace Warpr::Core
       break;
     case WarprStreamingMessageType::RequestKeyFrameMessage:
       OnRequestKeyFrameMessage(static_cast<const RequestKeyFrameMessage*>(message));
+      break;
+    case WarprStreamingMessageType::VideoCodecPreferenceMessage:
+      OnVideoCodecPreferenceMessage(static_cast<const VideoCodecPreferenceMessage*>(message));
       break;
     }
   }
@@ -112,6 +116,22 @@ namespace Warpr::Core
   void WarpSession::OnRequestKeyFrameMessage(const Messaging::RequestKeyFrameMessage* message)
   {
     _logger.log(log_severity::information, "Key frame requested.");
+    _isKeyFrameSent = false;
+  }
+
+  void WarpSession::OnVideoCodecPreferenceMessage(const Messaging::VideoCodecPreferenceMessage* message)
+  {
+    lock_guard lock(_mutex);
+
+    string codecs;
+    for (auto codec : *message->Codecs)
+    {
+      if (!codecs.empty()) codecs += ", ";
+      codecs += to_string(codec);
+    }
+    _logger.log(log_severity::information, "Client supports codecs: {}.", codecs.empty() ? "none" : codecs);
+
+    _videoEncoder->CodecPreference(*message->Codecs);
     _isKeyFrameSent = false;
   }
 

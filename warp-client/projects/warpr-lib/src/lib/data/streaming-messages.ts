@@ -2,6 +2,7 @@ export enum WarprStreamingMessageType {
   PointerInputMessage = "PointerInputMessage",
   ResizeSurfaceMessage = "ResizeSurfaceMessage",
   RequestKeyFrameMessage = "RequestKeyFrameMessage",
+  VideoCodecPreferenceMessage = "VideoCodecPreferenceMessage",
 }
 
 export type Point = {
@@ -141,7 +142,16 @@ export class RequestKeyFrameMessage {
   public readonly $type = WarprStreamingMessageType.RequestKeyFrameMessage;
 }
 
+export class VideoCodecPreferenceMessage {
+  public readonly $type = WarprStreamingMessageType.VideoCodecPreferenceMessage;
+
+  constructor(
+    public Codecs: string[]
+  ) { }
+}
+
 export type WarprStreamingMessage =
   PointerInputMessage |
   ResizeSurfaceMessage |
-  RequestKeyFrameMessage;
+  RequestKeyFrameMessage |
+  VideoCodecPreferenceMessage;

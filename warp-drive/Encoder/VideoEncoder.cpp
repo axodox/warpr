@@ -17,6 +17,19 @@ namespace
       throw runtime_error("NVEnc call failed.");
     }
   }
+
+  GUID get_codec_guid(Warpr::Encoder::VideoCodec codec)
+  {
+    switch (codec)
+    {
+    case Warpr::Encoder::VideoCodec::H264:
+      return NV_ENC_CODEC_H264_GUID;
+    case Warpr::Encoder::VideoCodec::H265:
+      return NV_ENC_CODEC_HEVC_GUID;
+    default:
+      throw logic_error("Unsupported video codec.");
+    }
+  }
 }
 
 namespace Warpr::Encoder
@@ -51,6 +64,75 @@ namespace Warpr::Encoder
     _logger.log(log_severity::information, "NVEnc API ready.");
 
     _device = container->resolve<GraphicsDevice>()->Device();
+
+    QuerySupportedCodecs();
+  }
+
+  void VideoEncoder::QuerySupportedCodecs()
+  {
+    _logger.log(log_severity::information, "Querying supported codecs...");
+
+    //Open a temporary session, codec support can only be queried from one
+    void* encoder = nullptr;
+    NV_ENC_OPEN_ENCODE_SESSION_EX_PARAMS encodeSessionExParams = {
+      .version = NV_ENC_OPEN_ENCODE_SESSION_EX_PARAMS_VER,
+      .deviceType = NV_ENC_DEVICE_TYPE_DIRECTX,
+      .device = _device.get(),
+      .apiVersion = NVENCAPI_VERSION
+    };
+    check_nvenc(_nvenc.nvEncOpenEncodeSessionEx(&encodeSessionExParams, &encoder));
+
+    try
+    {
+      uint32_t guidCount = 0;
+      check_nvenc(_nvenc.nvEncGetEncodeGUIDCount(encoder, &guidCount));
+
+      vector<GUID> guids(guidCount);
+      check_nvenc(_nvenc.nvEncGetEncodeGUIDs(encoder, guids.data(), guidCount, &guidCount));
+      guids.resize(guidCount);
+
+      for (auto codec : { VideoCodec::H264, VideoCodec::H265 })
+      {
+        if (ranges::find(guids, get_codec_guid(codec)) == guids.end()) continue;
+
+        _supportedCodecs.emplace(codec);
+        _logger.log(log_severity::information, "{} encoding is supported.", codec);
+      }
+
+      _nvenc.nvEncDestroyEncoder(encoder);
+    }
+    catch (...)
+    {
+      _nvenc.nvEncDestroyEncoder(encoder);
+      throw;
+    }
+
+    if (_supportedCodecs.empty())
+    {
+      _logger.log(log_severity::error, "No supported video codec found.");
+      throw runtime_error("No supported video codec found.");
+    }
+  }
+
+  const std::vector<VideoCodec>& VideoEncoder::CodecPreference() const
+  {
+    return _codecPreference;
+  }
+
+  void VideoEncoder::CodecPreference(const std::vector<VideoCodec>& value)
+  {
+    _codecPreference = value;
+  }
+
+  VideoCodec VideoEncoder::SelectCodec() const
+  {
+    for (auto codec : _codecPreference)
+    {
+      if (_supportedCodecs.contains(codec)) return codec;
+    }
+
+    //No overlap with the client, fall back to the best codec the GPU supports
+    return *_supportedCodecs.rbegin();
   }
 
   VideoEncoder::~VideoEncoder()
@@ -149,6 +231,7 @@ namespace Warpr::Encoder
       result.Type = description.pictureType == NV_ENC_PIC_TYPE_IDR ? FrameType::Key : FrameType::Delta;
       result.Width = _encoderProperties.Width;
       result.Height = _encoderProperties.Height;
+      result.Codec = _encoderProperties.Codec;
 
       check_nvenc(_nvenc.nvEncUnlockBitstream(_encoder, _outputBuffer));
     }
@@ -165,7 +248,8 @@ namespace Warpr::Encoder
     return {
       .Width = description.Width,
       .Height = description.Height,
-      .Bitrate = _bitrate
+      .Bitrate = _bitrate,
+      .Codec = SelectCodec()
     };
   }
 
@@ -195,9 +279,11 @@ namespace Warpr::Encoder
 
     //Initialize encoder
     {
-      _logger.log(log_severity::information, "Initializing encoder...");
+      _logger.log(log_severity::information, "Initializing {} encoder...", encoderProperties.Codec);
+      auto codecGuid = get_codec_guid(encoderProperties.Codec);
+
       NV_ENC_PRESET_CONFIG presetConfig = { NV_ENC_PRESET_CONFIG_VER, 0, { NV_ENC_CONFIG_VER } };
-      check_nvenc(_nvenc.nvEncGetEncodePresetConfigEx(_encoder, NV_ENC_CODEC_HEVC_GUID, NV_ENC_PRESET_P1_GUID, NV_ENC_TUNING_INFO_ULTRA_LOW_LATENCY, &presetConfig));
+      check_nvenc(_nvenc.nvEncGetEncodePresetConfigEx(_encoder, codecGuid, NV_ENC_PRESET_P1_GUID, NV_ENC_TUNING_INFO_ULTRA_LOW_LATENCY, &presetConfig));
 
       NV_ENC_CONFIG encodeConfig = presetConfig.presetCfg;
 
@@ -210,21 +296,38 @@ namespace Warpr::Encoder
       //encodeConfig.gopLength = 120; //Key frame interval
       encodeConfig.rcParams.multiPass = NV_ENC_MULTI_PASS_DISABLED;
 
-      encodeConfig.encodeCodecConfig.hevcConfig.enableIntraRefresh = 1;
-      encodeConfig.encodeCodecConfig.hevcConfig.intraRefreshPeriod = 120;
-      encodeConfig.encodeCodecConfig.hevcConfig.intraRefreshCnt = 120;
-      encodeConfig.encodeCodecConfig.hevcConfig.inputBitDepth = NV_ENC_BIT_DEPTH_8;
-      encodeConfig.encodeCodecConfig.hevcConfig.outputBitDepth = NV_ENC_BIT_DEPTH_8;
-      encodeConfig.encodeCodecConfig.hevcConfig.chromaFormatIDC = 1;
-      encodeConfig.encodeCodecConfig.hevcConfig.idrPeriod = encodeConfig.gopLength;
-      encodeConfig.encodeCodecConfig.hevcConfig.sliceMode = 3;
-      encodeConfig.encodeCodecConfig.hevcConfig.sliceModeData = 2048;
-      encodeConfig.encodeCodecConfig.hevcConfig.repeatSPSPPS = 1;
+      switch (encoderProperties.Codec)
+      {
+      case VideoCodec::H264:
+        encodeConfig.profileGUID = NV_ENC_H264_PROFILE_HIGH_GUID;
+        encodeConfig.encodeCodecConfig.h264Config.enableIntraRefresh = 1;
+        encodeConfig.encodeCodecConfig.h264Config.intraRefreshPeriod = 120;
+        encodeConfig.encodeCodecConfig.h264Config.intraRefreshCnt = 120;
+        encodeConfig.encodeCodecConfig.h264Config.chromaFormatIDC = 1;
+        encodeConfig.encodeCodecConfig.h264Config.idrPeriod = encodeConfig.gopLength;
+        encodeConfig.encodeCodecConfig.h264Config.sliceMode = 3;
+        encodeConfig.encodeCodecConfig.h264Config.sliceModeData = 2048;
+        encodeConfig.encodeCodecConfig.h264Config.repeatSPSPPS = 1;
+        encodeConfig.encodeCodecConfig.h264Config.h264VUIParameters.bitstreamRestrictionFlag = 1; //Signals no frame reordering, so decoders output frames without buffering
+        break;
+      case VideoCodec::H265:
+        encodeConfig.encodeCodecConfig.hevcConfig.enableIntraRefresh = 1;
+        encodeConfig.encodeCodecConfig.hevcConfig.intraRefreshPeriod = 120;
+        encodeConfig.encodeCodecConfig.hevcConfig.intraRefreshCnt = 120;
+        encodeConfig.encodeCodecConfig.hevcConfig.inputBitDepth = NV_ENC_BIT_DEPTH_8;
+        encodeConfig.encodeCodecConfig.hevcConfig.outputBitDepth = NV_ENC_BIT_DEPTH_8;
+        encodeConfig.encodeCodecConfig.hevcConfig.chromaFormatIDC = 1;
+        encodeConfig.encodeCodecConfig.hevcConfig.idrPeriod = encodeConfig.gopLength;
+        encodeConfig.encodeCodecConfig.hevcConfig.sliceMode = 3;
+        encodeConfig.encodeCodecConfig.hevcConfig.sliceModeData = 2048;
+        encodeConfig.encodeCodecConfig.hevcConfig.repeatSPSPPS = 1;
+        break;
+      }
       encodeConfig.frameIntervalP = 1;
 
       NV_ENC_INITIALIZE_PARAMS description{
         .version = NV_ENC_INITIALIZE_PARAMS_VER,
-        .encodeGUID = NV_ENC_CODEC_HEVC_GUID,
+        .encodeGUID = codecGuid,
         .presetGUID = NV_ENC_PRESET_P1_GUID,
         .encodeWidth = _encoderProperties.Width,
         .encodeHeight = _encoderProperties.Height,
@@ -318,6 +421,9 @@ namespace Warpr::Encoder
       _nvenc.nvEncUnregisterResource(_encoder, _inputResource);
       _inputResource = nullptr;
     }
+
+    //The frame must be registered again with the new encoder, even if the texture is the same
+    _frameResource = nullptr;
 
     if (_outputBuffer)
     {
