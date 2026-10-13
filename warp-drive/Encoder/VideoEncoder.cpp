@@ -308,6 +308,7 @@ namespace Warpr::Encoder
         encodeConfig.encodeCodecConfig.h264Config.sliceMode = 3;
         encodeConfig.encodeCodecConfig.h264Config.sliceModeData = 2048;
         encodeConfig.encodeCodecConfig.h264Config.repeatSPSPPS = 1;
+        encodeConfig.encodeCodecConfig.h264Config.h264VUIParameters.bitstreamRestrictionFlag = 1; //Signals no frame reordering, so decoders output frames without buffering
         break;
       case VideoCodec::H265:
         encodeConfig.encodeCodecConfig.hevcConfig.enableIntraRefresh = 1;
@@ -420,6 +421,9 @@ namespace Warpr::Encoder
       _nvenc.nvEncUnregisterResource(_encoder, _inputResource);
       _inputResource = nullptr;
     }
+
+    //The frame must be registered again with the new encoder, even if the texture is the same
+    _frameResource = nullptr;
 
     if (_outputBuffer)
     {

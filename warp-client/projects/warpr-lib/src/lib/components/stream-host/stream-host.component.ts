@@ -3,6 +3,7 @@ import { StreamingService } from '../../services/streaming.service';
 import { EncodedFrame, FrameType, Size, VideoCodec } from '../../data/frames';
 import { PointerInputMessage, PointerStates, RequestKeyFrameMessage, ResizeSurfaceMessage, VideoCodecPreferenceMessage } from '../../data/streaming-messages';
 import { CommonModule } from '@angular/common';
+import { CreateVideoFrameRenderer, IVideoFrameRenderer } from './video-frame-renderer';
 
 @Component({
   selector: 'warpr-stream-host',
@@ -26,7 +27,7 @@ export class StreamHostComponent {
 
   @ViewChild("renderTarget")
   private _canvas?: ElementRef<HTMLCanvasElement>;
-  private _renderingContext: CanvasRenderingContext2D | null = null;
+  private _renderer: IVideoFrameRenderer | null = null;
 
   private _decoder: VideoDecoder | null = null;
   private _framePending?: VideoFrame;
@@ -36,7 +37,8 @@ export class StreamHostComponent {
   private _pointerStates: PointerStates = {};
   private _framesInDecodeQueue = 0;
   private _videoCodec = VideoCodec.Unknown;
-  private _decodableCodecs = new Set<VideoCodec>();
+  private _decodableCodecs?: Set<VideoCodec>;
+  private _workingCodecs = new Set<VideoCodec>();
 
   public get IsFullScreenAvailable(): boolean {
     return document.fullscreenEnabled && this.isMenuVisible;
@@ -74,9 +76,21 @@ export class StreamHostComponent {
   }
 
   private async SendCodecPreferenceAsync() {
-    let codecs = await StreamHostComponent.GetSupportedCodecsAsync();
-    this._decodableCodecs = new Set(codecs);
-    this._streamingService.SendControlMessage(new VideoCodecPreferenceMessage(codecs.map(p => VideoCodec[p])));
+    this._decodableCodecs ??= new Set(await StreamHostComponent.GetSupportedCodecsAsync());
+    this._streamingService.SendControlMessage(new VideoCodecPreferenceMessage([...this._decodableCodecs].map(p => VideoCodec[p])));
+  }
+
+  private OnDecoderError(codec: VideoCodec, error: DOMException) {
+    console.error(error);
+
+    //Some browsers report support for a codec they cannot decode (e.g. HEVC in Firefox), so drop codecs which never produced a frame
+    if (!this._workingCodecs.has(codec) && this._decodableCodecs?.delete(codec)) {
+      console.warn(`Decoding ${VideoCodec[codec]} failed, falling back to other codecs.`);
+      this.SendCodecPreferenceAsync();
+      return;
+    }
+
+    this._streamingService.SendControlMessage(new RequestKeyFrameMessage());
   }
 
   private async ngAfterViewInit() {
@@ -84,15 +98,15 @@ export class StreamHostComponent {
     console.log("Initializing stream host...");
 
     let canvas = this._canvas!.nativeElement;
-    this._renderingContext = canvas.getContext("2d")!;
+    this._renderer = CreateVideoFrameRenderer(canvas);
     canvas.onpointerdown = (event) => this.OnPointerEvent(event);
     canvas.onpointermove = (event) => this.OnPointerEvent(event);
     canvas.onpointerup = (event) => this.OnPointerEvent(event);
     canvas.onwheel = (event) => this.OnWheelEvent(event);
     canvas.oncontextmenu = (event) => event.preventDefault();
 
-    if (this._renderingContext) {
-      console.log("Stream host initialized.");
+    if (this._renderer) {
+      console.log(`Stream host initialized with ${this._renderer.Name} renderer.`);
     }
     else {
       console.log("Stream host failed to initialize.");
@@ -129,7 +143,7 @@ export class StreamHostComponent {
   private OnFrameReceived(frame: EncodedFrame) {
     //Skip frames we cannot decode, the server will switch codec once it receives our preference
     let codecString = StreamHostComponent._codecStrings.get(frame.Codec);
-    if (!codecString || !this._decodableCodecs.has(frame.Codec)) return;
+    if (!codecString || !this._decodableCodecs?.has(frame.Codec)) return;
 
     let chunk = new EncodedVideoChunk({
       data: frame.Bytes,
@@ -144,12 +158,10 @@ export class StreamHostComponent {
       console.log("Configuring decoder...");
 
       if (this._decoder !== null && this._decoder.state !== 'closed') this._decoder.close();
+      let codec = frame.Codec;
       this._decoder = new VideoDecoder({
         output: (frame) => this.OnFrameDecoded(frame),
-        error: (error) => {
-          console.error(error);
-          this._streamingService.SendControlMessage(new RequestKeyFrameMessage());
-        }
+        error: (error) => this.OnDecoderError(codec, error)
       });
       this._isDecoderInitialized = false;
 
@@ -181,6 +193,7 @@ export class StreamHostComponent {
 
   private OnFrameDecoded(frame: VideoFrame) {
     this._framesInDecodeQueue--;
+    this._workingCodecs.add(this._videoCodec);
 
     if (this._framePending) this._framePending.close();
     this._framePending = frame;
@@ -196,8 +209,10 @@ export class StreamHostComponent {
 
       //Set canvas resolution to video resolution
       let canvas = this._canvas!.nativeElement;
-      canvas.width = frame.displayWidth;
-      canvas.height = frame.displayHeight;
+      
+      //Assigning the size resets the canvas even if unchanged, which is expensive at high resolutions
+      if (canvas.width !== frame.displayWidth) canvas.width = frame.displayWidth;
+      if (canvas.height !== frame.displayHeight) canvas.height = frame.displayHeight;
 
       //Check for control size change
       let canvasRect = canvas.getBoundingClientRect();
@@ -211,9 +226,7 @@ export class StreamHostComponent {
       }
 
       //Draw new frame
-      if (this._renderingContext) {
-        this._renderingContext.drawImage(frame, 0, 0, frame.displayWidth, frame.displayHeight);
-      }
+      this._renderer?.Draw(frame);
 
       //Release memory
       frame.close();
