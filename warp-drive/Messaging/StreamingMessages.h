@@ -1,6 +1,7 @@
 #pragma once
 #include "warpr_includes.h"
 #include "Input/PointerInput.h"
+#include "Encoder/VideoEncoder.h"
 
 namespace Warpr::Messaging
 {
@@ -8,7 +9,8 @@ namespace Warpr::Messaging
     Unknown,
     PointerInputMessage,
     ResizeSurfaceMessage,
-    RequestKeyFrameMessage
+    RequestKeyFrameMessage,
+    VideoCodecPreferenceMessage
   );
 
   struct WarprStreamingMessage : public Axodox::Json::json_object_base
@@ -54,6 +56,15 @@ namespace Warpr::Messaging
 
   struct RequestKeyFrameMessage : public WarprStreamingMessage
   {
+    virtual WarprStreamingMessageType Type() const override;
+  };
+
+  struct VideoCodecPreferenceMessage : public WarprStreamingMessage
+  {
+    Axodox::Json::json_property<std::vector<Encoder::VideoCodec>> Codecs;
+
+    VideoCodecPreferenceMessage();
+
     virtual WarprStreamingMessageType Type() const override;
   };
 }

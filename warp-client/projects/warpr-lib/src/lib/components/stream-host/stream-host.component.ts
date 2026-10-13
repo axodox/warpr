@@ -1,7 +1,7 @@
 import { Component, ElementRef, Input, ViewChild } from '@angular/core';
 import { StreamingService } from '../../services/streaming.service';
-import { EncodedFrame, FrameType, Size } from '../../data/frames';
-import { PointerInputMessage, PointerStates, RequestKeyFrameMessage, ResizeSurfaceMessage } from '../../data/streaming-messages';
+import { EncodedFrame, FrameType, Size, VideoCodec } from '../../data/frames';
+import { PointerInputMessage, PointerStates, RequestKeyFrameMessage, ResizeSurfaceMessage, VideoCodecPreferenceMessage } from '../../data/streaming-messages';
 import { CommonModule } from '@angular/common';
 
 @Component({
@@ -12,6 +12,14 @@ import { CommonModule } from '@angular/common';
 })
 export class StreamHostComponent {
   private static readonly _maxFramesInDecodeQueue = 10;
+
+  //In order of preference
+  private static readonly _codecStrings = new Map<VideoCodec, string>([
+    [VideoCodec.H265, "hvc1.1.6.L93.B0"],
+    [VideoCodec.H264, "avc1.640033"]
+  ]);
+
+  private static _supportedCodecs?: Promise<VideoCodec[]>;
 
   @Input()
   public isMenuVisible = true;
@@ -27,6 +35,8 @@ export class StreamHostComponent {
   private _isDecoderInitialized = false;
   private _pointerStates: PointerStates = {};
   private _framesInDecodeQueue = 0;
+  private _videoCodec = VideoCodec.Unknown;
+  private _decodableCodecs = new Set<VideoCodec>();
 
   public get IsFullScreenAvailable(): boolean {
     return document.fullscreenEnabled && this.isMenuVisible;
@@ -37,6 +47,36 @@ export class StreamHostComponent {
     private _root: ElementRef<HTMLDivElement>) {
     this._streamingService.Connected.Subscribe((sender, eventArgs) => this.OnConnected());
     this._streamingService.FrameReceived.Subscribe((sender, eventArgs) => this.OnFrameReceived(eventArgs));
+  }
+
+  private static GetSupportedCodecsAsync(): Promise<VideoCodec[]> {
+    StreamHostComponent._supportedCodecs ??= (async () => {
+      let result: VideoCodec[] = [];
+      for (let [codec, codecString] of StreamHostComponent._codecStrings) {
+        try {
+          let support = await VideoDecoder.isConfigSupported({
+            codec: codecString,
+            hardwareAcceleration: "prefer-hardware",
+            optimizeForLatency: true
+          });
+          if (support.supported) result.push(codec);
+        }
+        catch (error) {
+          console.warn(`Failed to check decoder support for ${codecString}.`, error);
+        }
+      }
+
+      console.log(`Supported codecs: ${result.map(p => VideoCodec[p]).join(", ") || "none"}.`);
+      return result;
+    })();
+
+    return StreamHostComponent._supportedCodecs;
+  }
+
+  private async SendCodecPreferenceAsync() {
+    let codecs = await StreamHostComponent.GetSupportedCodecsAsync();
+    this._decodableCodecs = new Set(codecs);
+    this._streamingService.SendControlMessage(new VideoCodecPreferenceMessage(codecs.map(p => VideoCodec[p])));
   }
 
   private async ngAfterViewInit() {
@@ -83,9 +123,14 @@ export class StreamHostComponent {
 
   private OnConnected() {
     this._displaySize = Size.Empty;
+    this.SendCodecPreferenceAsync();
   }
 
   private OnFrameReceived(frame: EncodedFrame) {
+    //Skip frames we cannot decode, the server will switch codec once it receives our preference
+    let codecString = StreamHostComponent._codecStrings.get(frame.Codec);
+    if (!codecString || !this._decodableCodecs.has(frame.Codec)) return;
+
     let chunk = new EncodedVideoChunk({
       data: frame.Bytes,
       type: frame.Type == FrameType.Key ? "key" : "delta",
@@ -95,7 +140,7 @@ export class StreamHostComponent {
     //Initialize decoder
     let frameSize = new Size(frame.Width, frame.Height);
 
-    if (this._decoder === null || this._decoder.state === 'closed' || !Size.AreEqual(frameSize, this._videoSize) || this._framesInDecodeQueue > StreamHostComponent._maxFramesInDecodeQueue) {
+    if (this._decoder === null || this._decoder.state === 'closed' || !Size.AreEqual(frameSize, this._videoSize) || frame.Codec !== this._videoCodec || this._framesInDecodeQueue > StreamHostComponent._maxFramesInDecodeQueue) {
       console.log("Configuring decoder...");
 
       if (this._decoder !== null && this._decoder.state !== 'closed') this._decoder.close();
@@ -109,16 +154,17 @@ export class StreamHostComponent {
       this._isDecoderInitialized = false;
 
       this._decoder.configure({
-        codec: "hvc1.1.6.L93.B0",
+        codec: codecString,
         codedWidth: frame.Width,
         codedHeight: frame.Height,
         hardwareAcceleration: "prefer-hardware",
         optimizeForLatency: true
       });
-      console.log("Decoder configured.");
+      console.log(`Decoder configured for ${VideoCodec[frame.Codec]}.`);
       console.log(`Resolution is ${frame.Width} x ${frame.Height}.`);
 
       this._videoSize = frameSize;
+      this._videoCodec = frame.Codec;
       this._framesInDecodeQueue = 0;
     }
 

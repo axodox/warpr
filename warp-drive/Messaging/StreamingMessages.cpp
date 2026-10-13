@@ -9,7 +9,8 @@ namespace Warpr::Messaging
   Axodox::Infrastructure::type_registry<WarprStreamingMessage> WarprStreamingMessage::derived_types = type_registry<WarprStreamingMessage>::create<
     PointerInputMessage,
     ResizeSurfaceMessage,
-    RequestKeyFrameMessage>();
+    RequestKeyFrameMessage,
+    VideoCodecPreferenceMessage>();
 
   Point::Point() :
     X(this, "X"),
@@ -56,5 +57,14 @@ namespace Warpr::Messaging
   WarprStreamingMessageType RequestKeyFrameMessage::Type() const
   {
     return WarprStreamingMessageType::RequestKeyFrameMessage;
+  }
+
+  VideoCodecPreferenceMessage::VideoCodecPreferenceMessage() :
+    Codecs(this, "Codecs")
+  { }
+
+  WarprStreamingMessageType VideoCodecPreferenceMessage::Type() const
+  {
+    return WarprStreamingMessageType::VideoCodecPreferenceMessage;
   }
 }

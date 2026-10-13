@@ -6,11 +6,18 @@ export enum FrameType {
   Delta
 }
 
+export enum VideoCodec {
+  Unknown,
+  H264,
+  H265
+}
+
 export class EncodedFrame {
   public Index: number;
   public Type: FrameType;
   public Width: number;
   public Height: number;
+  public Codec: VideoCodec;
   public Bytes: ArrayBuffer;
 
   public constructor(buffer: ArrayBuffer) {
@@ -20,6 +27,7 @@ export class EncodedFrame {
     this.Index = stream.ReadUInt32();
     this.Width = stream.ReadUInt32();
     this.Height = stream.ReadUInt32();
+    this.Codec = stream.ReadUInt32();
     this.Bytes = stream.ReadBuffer();
   }
 }
