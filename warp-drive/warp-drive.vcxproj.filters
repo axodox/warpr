@@ -60,6 +60,9 @@
     <ClCompile Include="Messaging\StreamingMessages.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Messaging\VideoPacketizer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="Messaging\StreamConnection.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -137,6 +140,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Messaging\StreamingMessages.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Messaging\VideoPacketizer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Messaging\StreamConnection.h">

@@ -25,7 +25,6 @@ namespace Warpr::Encoder
     uint32_t Height = 0;
     VideoCodec Codec = VideoCodec::Unknown;
     std::vector<uint8_t> Bytes;
-    std::vector<uint32_t> Slices;
   };
 
   class VideoEncoder
@@ -41,6 +40,13 @@ namespace Warpr::Encoder
     };
 
   public:
+    //H.265 slices are sized to fit into a single network packet, so packet loss only loses parts of a frame
+    static const uint32_t MaxSliceSize = 1000;
+
+    //A new intra refresh wave starts every period and repaints the whole picture over count frames, healing slices lost in transit
+    static const uint32_t IntraRefreshPeriod = 60;
+    static const uint32_t IntraRefreshCount = 30;
+
     VideoEncoder(Axodox::Infrastructure::dependency_container* container);
     ~VideoEncoder();
 
@@ -64,6 +70,10 @@ namespace Warpr::Encoder
     EncoderProperties _encoderProperties{};
 
     uint32_t _bitrate = 12'800'000;
+
+    //DIAGNOSTIC
+    std::chrono::steady_clock::time_point _diagLastTime{};
+    uint64_t _diagFrames = 0, _diagIntraBlocks = 0, _diagTotalBlocks = 0, _diagRefreshStarts = 0, _diagKeyFrames = 0;
     std::vector<VideoCodec> _codecPreference{ VideoCodec::H265, VideoCodec::H264 };
     std::set<VideoCodec> _supportedCodecs;
 

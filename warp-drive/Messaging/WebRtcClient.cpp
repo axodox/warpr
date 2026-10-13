@@ -52,16 +52,14 @@ namespace Warpr::Messaging
     return _peerConnection && _peerConnection->state() == PeerConnection::State::Connected;
   }
 
-  void WebRtcClient::SendVideoFrame(const std::vector<uint8_t>& bytes)
+  void WebRtcClient::SendVideoPacket(const rtc::binary& packet)
   {
     lock_guard lock(_mutex);
     if (!IsConnected()) return;
 
-    _streamMessageSplitter.SplitMessage(reinterpret_cast<const binary&>(bytes), [=](const binary& message) {
-      _streamChannel->send(message);
-      });
+    _streamChannel->send(packet);
 
-    _dataSentSinceLastReport += bytes.size();
+    _dataSentSinceLastReport += packet.size();
     auto now = steady_clock::now();
     if (now - _lastReportingTime > 1s)
     {
@@ -185,7 +183,6 @@ namespace Warpr::Messaging
 
           if (state == PeerConnection::State::Connected)
           {
-            _streamMessageSplitter.MaxMessageSize = _peerConnection->remoteMaxMessageSize();
             _auxMessageSplitter.MaxMessageSize = _peerConnection->remoteMaxMessageSize();
           }
           });

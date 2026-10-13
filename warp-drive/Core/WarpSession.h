@@ -5,6 +5,7 @@
 #include "Encoder/VideoEncoder.h"
 #include "Messaging/WebRtcClient.h"
 #include "Messaging/WebSocketClient.h"
+#include "Messaging/VideoPacketizer.h"
 #include "Input/InputProvider.h"
 
 namespace Warpr::Core
@@ -27,6 +28,8 @@ namespace Warpr::Core
     std::shared_ptr<Messaging::WebRtcClient> _webRtcClient;
     std::shared_ptr<Messaging::StreamConnection> _connection;
     std::shared_ptr<Messaging::WebSocketClient> _webSocketClient;
+
+    Messaging::VideoPacketizer _videoPacketizer;
 
     bool _isKeyFrameSent = false;
     std::chrono::steady_clock::time_point _lastStateTime = {}, _lastFrameTime = {};

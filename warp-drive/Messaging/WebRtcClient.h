@@ -25,7 +25,7 @@ namespace Warpr::Messaging
     WebRtcClient(Axodox::Infrastructure::dependency_container* container);
 
     bool IsConnected() const;
-    void SendVideoFrame(const std::vector<uint8_t>& bytes);
+    void SendVideoPacket(const rtc::binary& packet);
     void SendControlMessage(const rtc::message_variant& message);
     void SendAuxMessage(const rtc::message_variant& message);
 
@@ -50,7 +50,6 @@ namespace Warpr::Messaging
     std::chrono::steady_clock::time_point _lastReportingTime;
     uint64_t _dataSentSinceLastReport;
 
-    MessageSplitter _streamMessageSplitter;
     MessageAssembler _auxMessageAssembler;
     MessageSplitter _auxMessageSplitter;
 

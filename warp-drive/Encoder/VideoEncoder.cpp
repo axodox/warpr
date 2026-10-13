@@ -10,11 +10,12 @@ using namespace winrt;
 
 namespace
 {
-  void check_nvenc(NVENCSTATUS status)
+  void check_nvenc(NVENCSTATUS status, const NV_ENCODE_API_FUNCTION_LIST* nvenc = nullptr, void* encoder = nullptr)
   {
     if (status != NV_ENC_SUCCESS)
     {
-      throw runtime_error("NVEnc call failed.");
+      auto details = nvenc && encoder && nvenc->nvEncGetLastErrorString ? nvenc->nvEncGetLastErrorString(encoder) : nullptr;
+      throw runtime_error(format("NVEnc call failed with status {}: {}", int(status), details && *details ? details : "no details."));
     }
   }
 
@@ -176,7 +177,7 @@ namespace Warpr::Encoder
         .reserved1 = {},
         .reserved2 = {}
       };
-      check_nvenc(_nvenc.nvEncMapInputResource(_encoder, &description));
+      check_nvenc(_nvenc.nvEncMapInputResource(_encoder, &description), &_nvenc, _encoder);
       mappedResource = description.mappedResource;
       mappedFormat = description.mappedBufferFmt;
     }
@@ -199,26 +200,24 @@ namespace Warpr::Encoder
         .pictureStruct = NV_ENC_PIC_STRUCT_FRAME,
         .pictureType = NV_ENC_PIC_TYPE_P
       };
-      check_nvenc(_nvenc.nvEncEncodePicture(_encoder, &description));
+      check_nvenc(_nvenc.nvEncEncodePicture(_encoder, &description), &_nvenc, _encoder);
     }
 
     //Unmap input
     {
-      check_nvenc(_nvenc.nvEncUnmapInputResource(_encoder, mappedResource));
+      check_nvenc(_nvenc.nvEncUnmapInputResource(_encoder, mappedResource), &_nvenc, _encoder);
     }
 
     //Get output
     EncodedFrame result;
     {
-      result.Slices.resize(2048);
-
       NV_ENC_LOCK_BITSTREAM description{
         .version = NV_ENC_LOCK_BITSTREAM_VER,
         .doNotWait = false,
-        .outputBitstream = _outputBuffer,
-        .sliceOffsets = result.Slices.data()
+        .getRCStats = true, //DIAGNOSTIC
+        .outputBitstream = _outputBuffer
       };
-      check_nvenc(_nvenc.nvEncLockBitstream(_encoder, &description));
+      check_nvenc(_nvenc.nvEncLockBitstream(_encoder, &description), &_nvenc, _encoder);
 
       if (description.bitstreamBufferPtr)
       {
@@ -226,14 +225,31 @@ namespace Warpr::Encoder
         memcpy(result.Bytes.data(), description.bitstreamBufferPtr, result.Bytes.size());
       }
 
-      result.Slices.resize(description.numSlices);
+      //DIAGNOSTIC: intra refresh activity
+      {
+        _diagFrames++;
+        _diagIntraBlocks += description.intraMBCount;
+        _diagTotalBlocks += description.intraMBCount + description.interMBCount;
+        if (description.pictureType == NV_ENC_PIC_TYPE_INTRA_REFRESH) _diagRefreshStarts++;
+        if (description.pictureType == NV_ENC_PIC_TYPE_IDR) _diagKeyFrames++;
+
+        auto now = chrono::steady_clock::now();
+        if (now - _diagLastTime > 1s)
+        {
+          _logger.log(log_severity::information, "DIAG {}: {} frames, intra blocks {:.1f}% ({} / {}), refresh starts {}, key frames {}",
+            _encoderProperties.Codec, _diagFrames, _diagTotalBlocks ? 100.0 * _diagIntraBlocks / _diagTotalBlocks : 0.0, _diagIntraBlocks, _diagTotalBlocks, _diagRefreshStarts, _diagKeyFrames);
+          _diagLastTime = now;
+          _diagFrames = _diagIntraBlocks = _diagTotalBlocks = _diagRefreshStarts = _diagKeyFrames = 0;
+        }
+      }
+
       result.Index = description.frameIdx;
       result.Type = description.pictureType == NV_ENC_PIC_TYPE_IDR ? FrameType::Key : FrameType::Delta;
       result.Width = _encoderProperties.Width;
       result.Height = _encoderProperties.Height;
       result.Codec = _encoderProperties.Codec;
 
-      check_nvenc(_nvenc.nvEncUnlockBitstream(_encoder, _outputBuffer));
+      check_nvenc(_nvenc.nvEncUnlockBitstream(_encoder, _outputBuffer), &_nvenc, _encoder);
     }
 
     //Return result
@@ -283,7 +299,7 @@ namespace Warpr::Encoder
       auto codecGuid = get_codec_guid(encoderProperties.Codec);
 
       NV_ENC_PRESET_CONFIG presetConfig = { NV_ENC_PRESET_CONFIG_VER, 0, { NV_ENC_CONFIG_VER } };
-      check_nvenc(_nvenc.nvEncGetEncodePresetConfigEx(_encoder, codecGuid, NV_ENC_PRESET_P1_GUID, NV_ENC_TUNING_INFO_ULTRA_LOW_LATENCY, &presetConfig));
+      check_nvenc(_nvenc.nvEncGetEncodePresetConfigEx(_encoder, codecGuid, NV_ENC_PRESET_P1_GUID, NV_ENC_TUNING_INFO_ULTRA_LOW_LATENCY, &presetConfig), &_nvenc, _encoder);
 
       NV_ENC_CONFIG encodeConfig = presetConfig.presetCfg;
 
@@ -293,7 +309,7 @@ namespace Warpr::Encoder
       //encodeConfig.rcParams.vbvBufferSize = 0;
       //encodeConfig.rcParams.vbvInitialDelay = 0;
       //encodeConfig.rcParams.maxBitRate = 2500;
-      //encodeConfig.gopLength = 120; //Key frame interval
+      encodeConfig.gopLength = NVENC_INFINITE_GOPLENGTH; //Required for intra refresh, key frames are only sent when requested
       encodeConfig.rcParams.multiPass = NV_ENC_MULTI_PASS_DISABLED;
 
       switch (encoderProperties.Codec)
@@ -301,25 +317,25 @@ namespace Warpr::Encoder
       case VideoCodec::H264:
         encodeConfig.profileGUID = NV_ENC_H264_PROFILE_HIGH_GUID;
         encodeConfig.encodeCodecConfig.h264Config.enableIntraRefresh = 1;
-        encodeConfig.encodeCodecConfig.h264Config.intraRefreshPeriod = 120;
-        encodeConfig.encodeCodecConfig.h264Config.intraRefreshCnt = 120;
+        encodeConfig.encodeCodecConfig.h264Config.intraRefreshPeriod = IntraRefreshPeriod;
+        encodeConfig.encodeCodecConfig.h264Config.intraRefreshCnt = IntraRefreshCount;
         encodeConfig.encodeCodecConfig.h264Config.chromaFormatIDC = 1;
         encodeConfig.encodeCodecConfig.h264Config.idrPeriod = encodeConfig.gopLength;
-        encodeConfig.encodeCodecConfig.h264Config.sliceMode = 3;
-        encodeConfig.encodeCodecConfig.h264Config.sliceModeData = 2048;
+        encodeConfig.encodeCodecConfig.h264Config.sliceMode = 2; //NVEnc does not support byte based slices for H.264, so use one slice per macroblock row
+        encodeConfig.encodeCodecConfig.h264Config.sliceModeData = 1;
         encodeConfig.encodeCodecConfig.h264Config.repeatSPSPPS = 1;
         encodeConfig.encodeCodecConfig.h264Config.h264VUIParameters.bitstreamRestrictionFlag = 1; //Signals no frame reordering, so decoders output frames without buffering
         break;
       case VideoCodec::H265:
         encodeConfig.encodeCodecConfig.hevcConfig.enableIntraRefresh = 1;
-        encodeConfig.encodeCodecConfig.hevcConfig.intraRefreshPeriod = 120;
-        encodeConfig.encodeCodecConfig.hevcConfig.intraRefreshCnt = 120;
+        encodeConfig.encodeCodecConfig.hevcConfig.intraRefreshPeriod = IntraRefreshPeriod;
+        encodeConfig.encodeCodecConfig.hevcConfig.intraRefreshCnt = IntraRefreshCount;
         encodeConfig.encodeCodecConfig.hevcConfig.inputBitDepth = NV_ENC_BIT_DEPTH_8;
         encodeConfig.encodeCodecConfig.hevcConfig.outputBitDepth = NV_ENC_BIT_DEPTH_8;
         encodeConfig.encodeCodecConfig.hevcConfig.chromaFormatIDC = 1;
         encodeConfig.encodeCodecConfig.hevcConfig.idrPeriod = encodeConfig.gopLength;
-        encodeConfig.encodeCodecConfig.hevcConfig.sliceMode = 3;
-        encodeConfig.encodeCodecConfig.hevcConfig.sliceModeData = 2048;
+        encodeConfig.encodeCodecConfig.hevcConfig.sliceMode = 1;
+        encodeConfig.encodeCodecConfig.hevcConfig.sliceModeData = MaxSliceSize;
         encodeConfig.encodeCodecConfig.hevcConfig.repeatSPSPPS = 1;
         break;
       }
@@ -337,7 +353,7 @@ namespace Warpr::Encoder
         .frameRateDen = 1,
         .enableEncodeAsync = 0,
         .enablePTD = 1,
-        .reportSliceOffsets = 1, //Slice offsets could be useful for frame splitting
+        .reportSliceOffsets = 0,
         .enableSubFrameWrite = 0,
         .enableExternalMEHints = 0, //Maybe we could use motion vectors from rendering later
         .enableMEOnlyMode = 0,
@@ -363,7 +379,7 @@ namespace Warpr::Encoder
         .reserved2 = {}
       };
 
-      check_nvenc(_nvenc.nvEncInitializeEncoder(_encoder, &description));
+      check_nvenc(_nvenc.nvEncInitializeEncoder(_encoder, &description), &_nvenc, _encoder);
       _logger.log(log_severity::information, "Encoder initialized.");
     }
 
@@ -371,7 +387,7 @@ namespace Warpr::Encoder
     {
       _logger.log(log_severity::information, "Allocating output buffer...");
       NV_ENC_CREATE_BITSTREAM_BUFFER description = { NV_ENC_CREATE_BITSTREAM_BUFFER_VER };
-      check_nvenc(_nvenc.nvEncCreateBitstreamBuffer(_encoder, &description));
+      check_nvenc(_nvenc.nvEncCreateBitstreamBuffer(_encoder, &description), &_nvenc, _encoder);
       _outputBuffer = description.bitstreamBuffer;
       _logger.log(log_severity::information, "Output buffer allocated.");
     }
@@ -387,7 +403,7 @@ namespace Warpr::Encoder
     if (frame.get() == _frameResource) return;
     _frameResource = frame.get();
 
-    if (_inputResource) check_nvenc(_nvenc.nvEncUnregisterResource(_encoder, _inputResource));
+    if (_inputResource) check_nvenc(_nvenc.nvEncUnregisterResource(_encoder, _inputResource), &_nvenc, _encoder);
 
     _logger.log(log_severity::information, "Registering input resource...");
     NV_ENC_REGISTER_RESOURCE description{
@@ -407,7 +423,7 @@ namespace Warpr::Encoder
       .reserved2 = {}
     };
 
-    check_nvenc(_nvenc.nvEncRegisterResource(_encoder, &description));
+    check_nvenc(_nvenc.nvEncRegisterResource(_encoder, &description), &_nvenc, _encoder);
     _inputResource = description.registeredResource;
     _logger.log(log_severity::information, "Input resource registered.");
   }

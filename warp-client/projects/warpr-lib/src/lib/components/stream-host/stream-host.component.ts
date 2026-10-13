@@ -39,6 +39,7 @@ export class StreamHostComponent {
   private _videoCodec = VideoCodec.Unknown;
   private _decodableCodecs?: Set<VideoCodec>;
   private _workingCodecs = new Set<VideoCodec>();
+  private _hasDecodedIncompleteFrame = false;
 
   public get IsFullScreenAvailable(): boolean {
     return document.fullscreenEnabled && this.isMenuVisible;
@@ -68,6 +69,10 @@ export class StreamHostComponent {
         }
       }
 
+      //DIAGNOSTIC: force a codec with ?codec=H264 or ?codec=H265
+      let forcedCodec = new URLSearchParams(location.search).get("codec");
+      if (forcedCodec) result = result.filter(p => VideoCodec[p] === forcedCodec.toUpperCase());
+
       console.log(`Supported codecs: ${result.map(p => VideoCodec[p]).join(", ") || "none"}.`);
       return result;
     })();
@@ -84,7 +89,8 @@ export class StreamHostComponent {
     console.error(error);
 
     //Some browsers report support for a codec they cannot decode (e.g. HEVC in Firefox), so drop codecs which never produced a frame
-    if (!this._workingCodecs.has(codec) && this._decodableCodecs?.delete(codec)) {
+    //Frames with lost slices can fail to decode regardless of codec support, so those do not count
+    if (!this._workingCodecs.has(codec) && !this._hasDecodedIncompleteFrame && this._decodableCodecs?.delete(codec)) {
       console.warn(`Decoding ${VideoCodec[codec]} failed, falling back to other codecs.`);
       this.SendCodecPreferenceAsync();
       return;
@@ -164,6 +170,7 @@ export class StreamHostComponent {
         error: (error) => this.OnDecoderError(codec, error)
       });
       this._isDecoderInitialized = false;
+      this._hasDecodedIncompleteFrame = false;
 
       this._decoder.configure({
         codec: codecString,
@@ -187,6 +194,7 @@ export class StreamHostComponent {
     }
     this._isDecoderInitialized = true;
 
+    this._hasDecodedIncompleteFrame ||= !frame.IsComplete;
     this._decoder.decode(chunk);
     this._framesInDecodeQueue++;
   }

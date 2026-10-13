@@ -1,5 +1,3 @@
-import { ArrayStream } from "../infrastructure/array-stream";
-
 export enum FrameType {
   Unknown,
   Key,
@@ -13,23 +11,14 @@ export enum VideoCodec {
 }
 
 export class EncodedFrame {
-  public Index: number;
-  public Type: FrameType;
-  public Width: number;
-  public Height: number;
-  public Codec: VideoCodec;
-  public Bytes: ArrayBuffer;
-
-  public constructor(buffer: ArrayBuffer) {
-    let stream = new ArrayStream(buffer);
-
-    this.Type = stream.ReadUInt32();
-    this.Index = stream.ReadUInt32();
-    this.Width = stream.ReadUInt32();
-    this.Height = stream.ReadUInt32();
-    this.Codec = stream.ReadUInt32();
-    this.Bytes = stream.ReadBuffer();
-  }
+  public constructor(
+    public Index: number,
+    public Type: FrameType,
+    public Width: number,
+    public Height: number,
+    public Codec: VideoCodec,
+    public Bytes: Uint8Array,
+    public IsComplete: boolean) { }
 }
 
 export class Size {

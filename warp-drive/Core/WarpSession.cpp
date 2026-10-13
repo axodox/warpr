@@ -70,14 +70,9 @@ namespace Warpr::Core
   {
     Stopwatch watch{"Send message"};
 
-    memory_stream message;
-    message.write(frame.Type);
-    message.write(frame.Index);
-    message.write(frame.Width);
-    message.write(frame.Height);
-    message.write(uint32_t(frame.Codec));
-    message.write(frame.Bytes);
-    _webRtcClient->SendVideoFrame(message);
+    _videoPacketizer.Packetize(frame, [&](const rtc::binary& packet) {
+      _webRtcClient->SendVideoPacket(packet);
+      });
   }
 
   void WarpSession::OnStreamingMessageReceived(Messaging::StreamConnection* sender, const Messaging::WarprStreamingMessage* message)

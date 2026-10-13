@@ -7,6 +7,7 @@ import { EventOwner, EventPublisher } from '../infrastructure/events';
 import { MessageAssembler } from '../infrastructure/message-assembler';
 import { MessageSplitter } from '../infrastructure/message-splitter';
 import { MessageContent } from '../infrastructure/messages';
+import { FrameAssembler } from '../infrastructure/frame-assembler';
 
 @Injectable({
   providedIn: 'root'
@@ -17,7 +18,7 @@ export class StreamingService {
   private _controlConnection?: RTCDataChannel;
 
   private _streamConnection?: RTCDataChannel;
-  private _streamMessageBuilder?: MessageAssembler;
+  private _frameAssembler?: FrameAssembler;
 
   private _auxConnection?: RTCDataChannel;
   private _auxMessageBuilder?: MessageAssembler;
@@ -46,7 +47,8 @@ export class StreamingService {
     this._auxConnection?.close();
     this._peerConnection?.close();
 
-    this._streamMessageBuilder = new MessageAssembler(3);
+    this._frameAssembler?.Reset();
+    this._frameAssembler = new FrameAssembler((frame) => this.OnFrameAssembled(frame));
     this._auxMessageBuilder = new MessageAssembler();
     this._auxMessageSplitter = new MessageSplitter();
 
@@ -106,10 +108,10 @@ export class StreamingService {
   private _frameCounter = 0;
 
   private OnStreamMessage(event: MessageEvent<any>) {
+    this._frameAssembler?.PushPacket(event.data as ArrayBuffer);
+  }
 
-    let message = this._streamMessageBuilder?.PushMessage(event.data as ArrayBuffer);
-    if (!message) return;
-
+  private OnFrameAssembled(frame: EncodedFrame) {
     this._frameCounter++;
 
     let now = performance.now();
@@ -121,7 +123,6 @@ export class StreamingService {
       this._frameCounter = 0;
     }
 
-    let frame = new EncodedFrame(message as ArrayBuffer);
     this._events.Raise(this.FrameReceived, this, frame);
   }
 

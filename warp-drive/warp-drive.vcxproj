@@ -112,6 +112,7 @@
     <ClCompile Include="Messaging\SignalingMessages.cpp" />
     <ClCompile Include="Messaging\StreamConnection.cpp" />
     <ClCompile Include="Messaging\StreamingMessages.cpp" />
+    <ClCompile Include="Messaging\VideoPacketizer.cpp" />
     <ClCompile Include="Messaging\WebRtcClient.cpp" />
     <ClCompile Include="Messaging\WebSocketClient.cpp" />
     <ClCompile Include="warpr_includes.cpp">
@@ -146,6 +147,7 @@
     <ClInclude Include="Messaging\SignalingMessages.h" />
     <ClInclude Include="Messaging\StreamConnection.h" />
     <ClInclude Include="Messaging\StreamingMessages.h" />
+    <ClInclude Include="Messaging\VideoPacketizer.h" />
     <ClInclude Include="Messaging\WebRtcClient.h" />
     <ClInclude Include="Messaging\WebSocketClient.h" />
     <ClInclude Include="Include\WarpDrive.h" />
