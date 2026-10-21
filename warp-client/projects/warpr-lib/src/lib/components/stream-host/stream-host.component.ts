@@ -35,6 +35,7 @@ export class StreamHostComponent {
   private _displaySize = Size.Empty;
   private _isDecoderInitialized = false;
   private _pointerStates: PointerStates = {};
+  private _mousePointerId = 1;
   private _framesInDecodeQueue = 0;
   private _videoCodec = VideoCodec.Unknown;
   private _decodableCodecs?: Set<VideoCodec>;
@@ -120,6 +121,7 @@ export class StreamHostComponent {
     event.preventDefault();
 
     if (event.type == "pointerdown") this._canvas!.nativeElement.setPointerCapture(event.pointerId);
+    if (event.pointerType == "mouse") this._mousePointerId = event.pointerId;
 
     let message = new PointerInputMessage(event, this._pointerStates, this._canvas!.nativeElement, wheelDelta);
     //console.log(message);
@@ -131,7 +133,13 @@ export class StreamHostComponent {
     //console.log(event);
     event.preventDefault();
 
-    let pointerEvent: PointerEvent = new PointerEvent(event.type, { ...event, pointerId: 1 });
+    //Wheel events have no pointer id, and the mouse pointer id differs between browsers (e.g. 1 in Chrome, 0 in Firefox)
+    let pointerEvent: PointerEvent = new PointerEvent(event.type, {
+      pointerId: this._mousePointerId,
+      pointerType: "mouse",
+      clientX: event.clientX,
+      clientY: event.clientY
+    });
     this.OnPointerEvent(pointerEvent, event.deltaY);
   }
 

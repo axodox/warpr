@@ -91,7 +91,6 @@ export class PointerInputMessage {
         break;
       case "wheel":
         this.Action = PointerAction.WheelChanged;
-        position = state.Position;
         break;
     }
 
