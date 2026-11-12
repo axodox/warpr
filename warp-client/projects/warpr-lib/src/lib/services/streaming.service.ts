@@ -23,9 +23,12 @@ export class StreamingService {
   private _auxMessageBuilder?: MessageAssembler;
   private _auxMessageSplitter?: MessageSplitter;
 
+  private _isConnected = false;
+
   private readonly _events = new EventOwner();
   public readonly FrameReceived = new EventPublisher<StreamingService, EncodedFrame>(this._events);
   public readonly Connected = new EventPublisher<StreamingService, any>(this._events);
+  public readonly Disconnected = new EventPublisher<StreamingService, any>(this._events);
   public readonly AuxChannelReady = new EventPublisher<StreamingService, any>(this._events);
 
   public readonly ControlMessageReceived = new EventPublisher<StreamingService, MessageContent>(this._events);
@@ -41,10 +44,8 @@ export class StreamingService {
   private Reconnect(configuration: RTCConfiguration) {
     console.log("Establishing peer connection...");
 
-    this._controlConnection?.close();
-    this._streamConnection?.close();
-    this._auxConnection?.close();
-    this._peerConnection?.close();
+    //The previous session ends here
+    this.Disconnect();
 
     this._streamMessageBuilder = new MessageAssembler(3);
     this._auxMessageBuilder = new MessageAssembler();
@@ -54,6 +55,31 @@ export class StreamingService {
     this._peerConnection.onicecandidate = (event) => this.OnIceCandidateAdded(event.candidate?.candidate);
     this._peerConnection.ondatachannel = (event) => this.OnDataChannel(event);
     this._peerConnection.onconnectionstatechange = (event) => this.OnConnectionStateChanged();
+  }
+
+  //Ends the session: closes the connections, detaching their handlers first so their closing does not affect a new session
+  private Disconnect() {
+    for (let channel of [this._controlConnection, this._streamConnection, this._auxConnection]) {
+      if (!channel) continue;
+
+      channel.onmessage = null;
+      channel.onclose = null;
+      channel.close();
+    }
+
+    this._controlConnection = undefined;
+    this._streamConnection = undefined;
+    this._auxConnection = undefined;
+
+    if (this._peerConnection) {
+      this._peerConnection.onicecandidate = null;
+      this._peerConnection.ondatachannel = null;
+      this._peerConnection.onconnectionstatechange = null;
+      this._peerConnection.close();
+      this._peerConnection = undefined;
+    }
+
+    this.OnDisconnected();
   }
 
   public SendControlMessage(message: any) {
@@ -73,9 +99,13 @@ export class StreamingService {
   private OnConnectionStateChanged() {
     console.log("WebRTC: " + this._peerConnection?.connectionState);
 
-    if (this._peerConnection?.connectionState === "connected") {
+    let state = this._peerConnection?.connectionState;
+    if (state === "connected") {
       let maxMessageSize = this._peerConnection?.sctp?.maxMessageSize;
       if (maxMessageSize) this._auxMessageSplitter!.MaxMessageSize = maxMessageSize;
+    }
+    else if (state === "failed" || state === "closed") { //"disconnected" is left out, as the connection may recover from it
+      this.Disconnect();
     }
   }
 
@@ -97,9 +127,28 @@ export class StreamingService {
         this._auxConnection = event.channel;
         this._auxConnection.binaryType = "arraybuffer"
         this._auxConnection.onmessage = (event) => this.OnAuxMessage(event);
-        this._events.Raise(this.Connected, this, null);
+        this._auxConnection.onclose = () => this.Disconnect();
+        this.OnConnected();
         break;
     }
+  }
+
+  //The session is usable once the aux channel is available
+  private OnConnected() {
+    if (this._isConnected) return;
+    this._isConnected = true;
+
+    console.log("WebRTC session connected.");
+    this._events.Raise(this.Connected, this, null);
+  }
+
+  //The session ends when the aux channel closes, the peer connection fails or a new session replaces it
+  private OnDisconnected() {
+    if (!this._isConnected) return;
+    this._isConnected = false;
+
+    console.log("WebRTC session disconnected.");
+    this._events.Raise(this.Disconnected, this, null);
   }
 
   private _lastFramerateRefreshTime = performance.now();
