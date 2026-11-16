@@ -1,0 +1,79 @@
+name: Build and publish
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-2022 # projects use the VS 2022 (v143) toolset
+    permissions:
+      contents: write # required to create GitHub releases
+      id-token: write # required for npm and NuGet trusted publishing (OIDC)
+    env:
+      # Continue the AppVeyor numbering (last published: 1.0.65)
+      PACKAGE_VERSION_OFFSET: 65
+    steps:
+      - uses: actions/checkout@v4
+
+      # npm trusted publishing needs Node >= 22.14 and npm >= 11.5.1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+
+      - name: Compute package version
+        shell: pwsh
+        run: |
+          $version = "1.0.$([int]$env:GITHUB_RUN_NUMBER + [int]$env:PACKAGE_VERSION_OFFSET)"
+          "PACKAGE_VERSION=$version" >> $env:GITHUB_ENV
+          Write-Host "Package version: $version"
+
+      - name: Update dependencies
+        shell: pwsh
+        run: .\update_dependencies.ps1
+
+      - name: Build npm package
+        shell: pwsh
+        run: .\build_npm.ps1
+
+      - name: Build NuGet packages
+        shell: pwsh
+        run: .\build_nuget.ps1
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Packages
+          path: |
+            Output/*.nupkg
+            Output/*.tgz
+
+      - name: Publish to npmjs.com
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/master'
+        working-directory: warp-client/dist/warpr-lib
+        run: npm publish
+
+      - name: NuGet login (OIDC → temporary API key)
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/master'
+        uses: NuGet/login@v1
+        id: login
+        with:
+          user: ${{ secrets.NUGET_USER }}
+
+      - name: Publish to nuget.org
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/master'
+        shell: pwsh
+        run: dotnet nuget push "Output\*.nupkg" --api-key "${{ steps.login.outputs.NUGET_API_KEY }}" --source https://api.nuget.org/v3/index.json --skip-duplicate
+
+      - name: Create GitHub release
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/master'
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # @() keeps a single result an array; pass it unsplatted so each path is one argument
+          $packages = @(Get-ChildItem Output\*.nupkg, Output\*.tgz | ForEach-Object { "Output/$($_.Name)" })
+          gh release create "v$env:PACKAGE_VERSION" $packages --target $env:GITHUB_SHA --title "v$env:PACKAGE_VERSION" --generate-notes

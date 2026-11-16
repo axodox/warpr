@@ -15,13 +15,13 @@ Write-Host 'Updating dependencies...' -ForegroundColor Magenta
 .\Tools\nuget.exe restore .\warpr.sln
 
 Write-Host 'Collecting build version information...' -ForegroundColor Magenta
-$version = if ($null -ne $env:APPVEYOR_BUILD_VERSION) { $env:APPVEYOR_BUILD_VERSION } else { "1.0.0.0" }
+$version = if ($env:PACKAGE_VERSION) { $env:PACKAGE_VERSION } elseif ($env:APPVEYOR_BUILD_VERSION) { $env:APPVEYOR_BUILD_VERSION } else { "1.0.0.0" }
 Write-Host "Version: $version"
 
-$branch = if ($null -ne $env:APPVEYOR_REPO_BRANCH) { $env:APPVEYOR_REPO_BRANCH } else { "master" }
+$branch = if ($env:GITHUB_REF_NAME) { $env:GITHUB_REF_NAME } elseif ($env:APPVEYOR_REPO_BRANCH) { $env:APPVEYOR_REPO_BRANCH } else { "master" }
 Write-Host "Branch: $branch"
 
-$commit = if ($null -ne $env:APPVEYOR_REPO_COMMIT) { $env:APPVEYOR_REPO_COMMIT } else { $null }
+$commit = if ($env:GITHUB_SHA) { $env:GITHUB_SHA } elseif ($env:APPVEYOR_REPO_COMMIT) { $env:APPVEYOR_REPO_COMMIT } else { $null }
 Write-Host "Commit: $commit"
 
 # Build projects

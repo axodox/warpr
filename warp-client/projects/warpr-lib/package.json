@@ -3,6 +3,10 @@
   "version": "1.0.0",
   "license": "MPL-2.0",
   "description": "Warper is a WebRTC based ultra-low latency video streaming library.",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/axodox/warpr.git"
+  },
   "peerDependencies": {
     "@angular/common": "^19.2.6",
     "@angular/core": "^19.2.6",

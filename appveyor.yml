@@ -3,9 +3,6 @@ branches:
   only:
   - master
 image: Visual Studio 2022
-environment:
-  NPM_TOKEN:
-    secure: rAP2UEWxMeKzQvgB0tysQ5nI+SuEKaDUgVQQlaxUlGaxqv/MlNFADF4OTRTn6JRd
 build_script:
 - ps: >-
     .\update_dependencies.ps1
@@ -16,10 +13,6 @@ build_script:
 artifacts:
 - path: Output\*.nupkg
   name: NugetPackages
-deploy:
-- provider: NuGet
-  api_key:
-    secure: y+7WZBzkjiCwo2zv0W+oQNGJ6sh10RdrirYgmnL9azcgk7n9Wmodjohy0IUKg1PT
-  username:
-    secure: 1K8aMtHh4cgJD51abewigQ==
-  artifact: NugetPackages
+  type: NuGetPackage
+- path: Output\*.tgz
+  name: NpmPackages
